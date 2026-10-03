@@ -61,6 +61,7 @@ elif focus.startswith("Provinsi · "):
 fig, trace_index = ch.pca_biplot(
     mv.scores, mv.explained, mv.loadings, mv.cluster, colors, names, prov,
     highlight=focus_set, outliers=mv.mahalanobis.where(mv.outlier).dropna(), show_arrows=arrows,
+    compact="Mobi" in st.context.headers.get("User-Agent", ""),  # ponsel: figur lebih pendek
 )
 # Biplot selebar kontainer (skala sumbu setara); teks sumbu dan scree berdampingan di bawahnya.
 left = st.container()

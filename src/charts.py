@@ -47,12 +47,12 @@ def base_layout(fig, height=420, title=None, legend=True, margin=None):
         height=height,
         separators=",.",
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor=tk.surface,
+        plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family=FONT, color=tk.ink, size=13),
         margin=margin or dict(l=8, r=8, t=40 if title else 12, b=8),
         title=dict(text=title, x=0, xanchor="left", font=dict(size=15, color=tk.ink)) if title else None,
         showlegend=legend,
-        legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0,
+        legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="center", x=0.5,
                     font=dict(size=12, color=tk.soft), bgcolor="rgba(0,0,0,0)"),
         hoverlabel=dict(bgcolor=tk.paper, bordercolor=tk.rule, font=dict(family=FONT, color=tk.ink, size=13)),
     )
@@ -66,6 +66,12 @@ def base_layout(fig, height=420, title=None, legend=True, margin=None):
 # ---------------------------------------------------------------------------
 # Peta (dasar)
 # ---------------------------------------------------------------------------
+
+def _hbar(title, **kw):
+    """Colorbar mendatar di bawah grafik, rata tengah."""
+    return dict(title=dict(text=title, side="top"), orientation="h", x=0.5, xanchor="center",
+                y=-0.04, yanchor="top", thickness=10, len=0.5, **kw)
+
 
 def _map_view(regions: pd.DataFrame | None, width_px: int = 900):
     """Pusat dan zoom agar kotak batas wilayah muat pada lebar peta perkiraan.
@@ -185,7 +191,7 @@ def bubble_legend(values, max_px=34):
 # ---------------------------------------------------------------------------
 
 def pca_biplot(scores, explained, loadings, cluster, colors, names, provinces,
-               highlight=None, outliers=None, show_arrows=True, label_outliers=5, n_arrows=7):
+               highlight=None, outliers=None, show_arrows=True, label_outliers=5, n_arrows=7, compact=False):
     """Biplot PC1-PC2. Satu trace per klaster (warna + bentuk = encoding ganda).
 
     Mengembalikan (fig, trace_index) - trace_index[curve][point] = kode wilayah,
@@ -222,7 +228,7 @@ def pca_biplot(scores, explained, loadings, cluster, colors, names, provinces,
                                arrowhead=2, arrowsize=1, arrowwidth=1.3, arrowcolor=tk.soft,
                                text="", standoff=0)
             fig.add_annotation(x=x, y=y, text=SECTOR_SHORT[code], showarrow=False,
-                               font=dict(size=11, color=tk.ink), bgcolor=tk.chart_bg,
+                               font=dict(size=11, color=tk.ink),
                                xanchor="left" if x >= 0 else "right", yanchor="bottom" if y >= 0 else "top")
 
     if outliers is not None and label_outliers:
@@ -235,13 +241,17 @@ def pca_biplot(scores, explained, loadings, cluster, colors, names, provinces,
                                arrowwidth=0.8, arrowcolor=tk.muted, ax=ax, ay=ay,
                                font=dict(size=11, color=tk.soft))
 
-    base_layout(fig, height=680)
+    # Rentang sumbu mengikuti sebaran data dengan skala X:Y setara. Kelebihan ruang mendatar
+    # diisi rentang X; kelebihan ruang tegak memperkecil area plot (bukan rentang Y kosong).
+    pad = lambda lo, hi: [lo - (hi - lo) * .08, hi + (hi - lo) * .08]
+    base_layout(fig, height=440 if compact else 600)
     fig.update_layout(dragmode="lasso", legend=dict(y=1.02, font=dict(size=11)),
                       margin=dict(l=8, r=8, t=56, b=8))
     fig.update_xaxes(title=f"PC1 · {idn(explained[0] * 100)}% varians<br>makin besar: ke arah jasa perkotaan",
-                     zeroline=True)
+                     zeroline=True, range=pad(scores["PC1"].min(), scores["PC1"].max()))
     fig.update_yaxes(title=f"PC2 · {idn(explained[1] * 100)}% varians<br>makin besar: ke arah industri",
-                     zeroline=True, scaleanchor="x", scaleratio=1)
+                     zeroline=True, scaleanchor="x", scaleratio=1, constrain="domain",
+                     range=pad(scores["PC2"].min(), scores["PC2"].max()))
     return fig, trace_index
 
 
@@ -325,8 +335,7 @@ def clustered_heatmap(z, row_order, col_order, cluster, colors, names, highlight
     fig.add_trace(go.Heatmap(
         z=zz.to_numpy(), x=[SECTOR_SHORT[c] for c in col_order], y=list(range(len(rows))),
         zmin=-3, zmax=3, zmid=0, colorscale=diverging_scale(tk), customdata=hover_names,
-        colorbar=dict(title=dict(text="z-score pangsa", side="right"), thickness=10, len=0.6,
-                      tickvals=[-3, -1.5, 0, 1.5, 3], ticktext=["≤ −3", "−1,5", "0", "1,5", "≥ 3"]),
+        colorbar=_hbar("z-score pangsa", tickvals=[-3, -1.5, 0, 1.5, 3], ticktext=["≤ −3", "−1,5", "0", "1,5", "≥ 3"]),
         hovertemplate="<b>%{customdata}</b><br>%{x}: z = %{z:.2f}<extra></extra>",
     ), 1, 2)
     show_labels = len(rows) <= 45
@@ -336,8 +345,7 @@ def clustered_heatmap(z, row_order, col_order, cluster, colors, names, highlight
     fig.update_xaxes(tickangle=-40, side="top", row=1, col=2)
     fig.update_xaxes(showticklabels=False, row=1, col=1)
     base_layout(fig, height=max(360, min(620, 14 * len(rows) + 140)), legend=False,
-                margin=dict(l=8, r=8, t=110, b=8))
-    fig.update_layout(plot_bgcolor=tk.surface)
+                margin=dict(l=8, r=8, t=110, b=64))
     fig.update_xaxes(gridcolor="rgba(0,0,0,0)")
     fig.update_yaxes(gridcolor="rgba(0,0,0,0)")
     return fig
@@ -351,10 +359,10 @@ def cluster_profile_heatmap(profile, col_order, counts):
     fig = go.Figure(go.Heatmap(
         z=p.to_numpy(), x=[SECTOR_SHORT[c] for c in col_order], y=ylab, zmin=-3, zmax=3, zmid=0,
         colorscale=diverging_scale(tk), text=text, texttemplate="%{text}", textfont=dict(size=10),
-        colorbar=dict(title=dict(text="rata-rata z", side="right"), thickness=10, len=0.8),
+        colorbar=_hbar("rata-rata z"),
         hovertemplate="<b>%{y}</b><br>%{x}: z rata-rata %{z:.2f}<extra></extra>",
     ))
-    base_layout(fig, height=330, legend=False, margin=dict(l=8, r=8, t=100, b=8))
+    base_layout(fig, height=390, legend=False, margin=dict(l=8, r=8, t=100, b=64))
     fig.update_xaxes(tickangle=-40, side="top", gridcolor="rgba(0,0,0,0)")
     fig.update_yaxes(autorange="reversed", gridcolor="rgba(0,0,0,0)")
     return fig
@@ -404,7 +412,8 @@ def moran_scatter(z, lag, quadrant, names, I):
     fig.add_trace(go.Scatter(x=[lo, hi], y=[I * lo, I * hi], mode="lines", name=f"kemiringan = I = {idn(I, 2)}",
                              line=dict(color=tk.ink, width=1.5), hoverinfo="skip"))
     base_layout(fig, height=420)
-    fig.update_layout(legend=dict(font=dict(size=11)), margin=dict(l=8, r=8, t=70, b=8))
+    fig.update_layout(legend=dict(font=dict(size=11), entrywidth=0, itemsizing="constant"),
+                      margin=dict(l=8, r=8, t=80, b=8))
     fig.update_xaxes(title="Nilai wilayah (z-score)", zeroline=True)
     fig.update_yaxes(title="Rata-rata 6 tetangga terdekat (z)", zeroline=True)
     return fig
@@ -460,7 +469,7 @@ def _hier_common(h, color_lim):
     marker = dict(
         colors=values, colorscale=scale, cmid=0, cmin=-color_lim, cmax=color_lim,
         line=dict(color=tk.paper, width=0.6),
-        colorbar=dict(title=dict(text="Tumbuh q-to-q", side="right"), ticksuffix="%", thickness=10, len=0.7),
+        colorbar=_hbar("Tumbuh q-to-q (%)", ticksuffix="%"),
     )
     return custom, hover, marker, _label_colors(values, scale, color_lim)
 
@@ -475,9 +484,9 @@ def treemap(h, color_lim, root_id="Indonesia", height=560):
                                                 textfont=dict(size=13)),
         texttemplate="<b>%{label}</b><br>Porsi %{customdata[2]:.1f}%<br>Tumbuh %{customdata[6]}",
         textfont=dict(size=13, color=text_colors),
-        tiling=dict(pad=2), root=dict(color=tk.surface),
+        tiling=dict(pad=2), root=dict(color="rgba(0,0,0,0)"),
     ))
-    base_layout(fig, height=height, legend=False, margin=dict(l=0, r=0, t=8, b=0))
+    base_layout(fig, height=height, legend=False, margin=dict(l=0, r=0, t=8, b=64))
     return fig
 
 
@@ -491,7 +500,7 @@ def icicle(h, color_lim, root_id="Indonesia", height=560):
         pathbar=dict(visible=True, side="top", thickness=26, textfont=dict(size=13)),
         texttemplate="<b>%{label}</b><br>Porsi %{customdata[2]:.1f}%<br>Tumbuh %{customdata[6]}",
         textfont=dict(size=13, color=text_colors),
-        root=dict(color=tk.surface),
+        root=dict(color="rgba(0,0,0,0)"),
     ))
-    base_layout(fig, height=height, legend=False, margin=dict(l=0, r=0, t=8, b=0))
+    base_layout(fig, height=height, legend=False, margin=dict(l=0, r=0, t=8, b=64))
     return fig

@@ -119,8 +119,17 @@ st.subheader(title_ind)
 # Judul grafik satu baris: indikator, sektor, dan satuan. Periodenya ditulis di baris sumber.
 tw = period.replace("Triwulan", "TW")
 when = "TW II terhadap TW I" if indicator == "Pertumbuhan q-to-q" else f"{tw} 2026"
-label_ind = {"Pangsa sektor": "Pangsa", "Location quotient": "LQ", "Pertumbuhan q-to-q": "Pertumbuhan"}[indicator]
-chart_title(f"{label_ind} {sector_lc}" + ("" if unit == "" else f" ({unit})"))
+u_t = "" if unit == "" else f" ({unit})"
+full, abbr = {"Pangsa sektor": ("Pangsa", "Pangsa"), "Location quotient": ("Location Quotient", "LQ"),
+              "Pertumbuhan q-to-q": ("Pertumbuhan", "Tumbuh")}[indicator]
+
+
+def fit(*options, limit=38):
+    """Judul terpanjang yang masih muat satu baris di ponsel (~38 karakter)."""
+    return next((o for o in options if len(o) <= limit), options[-1])
+
+
+chart_title(fit(f"Peta {full} {sector_lc}{u_t}", f"{full} {sector_lc}{u_t}", f"{abbr} {sector_lc}{u_t}"))
 
 show_choro = "Choropleth" in (layers or [])
 show_bubble = "Lingkaran PDRB" in (layers or [])
@@ -213,7 +222,8 @@ ldf["kuadran"] = mo["quadrant"]
 lisa_labels = [q for q in TK.lisa if q in set(ldf["kuadran"])]
 c1, c2 = st.columns([1.5, 1], gap="large")
 with c1:
-    chart_title(f"LISA {short} {sector_lc}")
+    chart_title(fit(f"Peta LISA {short} {sector_lc}", f"LISA {short} {sector_lc}",
+                    f"LISA {'tumbuh' if short == 'pertumbuhan' else short} {sector_lc}"))
     fig = ch.choropleth_classes(
         geo, ldf, "kuadran", lisa_labels, [TK.lisa[q] for q in lisa_labels],
         ["kabkota", "provinsi", "kuadran", "nilai_txt"],
@@ -229,6 +239,4 @@ with c2:
     chart_title(f"Moran scatterplot {short}")
     st.plotly_chart(ch.moran_scatter(mo["z"], mo["lag"], np.asarray(mo["quadrant"]),
                                      ldf["kabkota"].to_numpy(), mo["I"]), config=ch.PLOT_CONFIG)
-    with st.container(key="moran_caption"):
-        st.caption("Moran scatterplot: kemiringan garis sama dengan Moran's I.")
-    source(f"{short} {sector_lc}, {when}; bobot 6 tetangga terdekat")
+    source(f"{short} {sector_lc}, {when}; kemiringan garis = Moran's I; bobot 6 tetangga terdekat")

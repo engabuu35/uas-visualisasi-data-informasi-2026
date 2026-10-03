@@ -66,8 +66,6 @@ CSS = """
 .st-key-dl-cards [data-testid="stDownloadButton"] button { min-height: 2.5rem; font-weight: 600; color: var(--tk-act3);
   background-color: color-mix(in srgb, var(--tk-act3) 14%, var(--tk-paper)); border-color: var(--tk-act3); }
 .st-key-dl-cards [data-testid="stDownloadButton"] button:hover { filter: brightness(.96); }
-.st-key-moran_caption { text-align: center; }
-.st-key-moran_caption [data-testid="stCaptionContainer"] { text-align: center; padding-left: 3.2rem; font-size: .8rem; } /* 3,2 rem = lebar judul sumbu-y, agar rata tengah terhadap area plot */
 .st-key-moran_text p { text-align: justify; text-justify: inter-word; }
 /* Tombol reset brushing: kecil dan rata kanan, bukan selebar kolom; berwarna sama dengan segmen terpilih. */
 .st-key-pc_reset_btn { display: flex; justify-content: flex-end; width: 100% !important; }
@@ -82,7 +80,7 @@ h3 { font-size: 1.15rem !important; }
 p, li { font-size: 1.04rem; line-height: 1.62; }
 .lede { font-size: 1.2rem; line-height: 1.6; color: var(--tk-soft); max-width: 46rem; margin: .2rem 0 1.4rem; }
 .prose { max-width: 44rem; }
-.src { font-size: .58rem; color: var(--tk-muted); margin: -.4rem 0 1.2rem; }
+.src { font-size: .58rem; color: var(--tk-muted); margin: -.4rem 0 1.2rem; text-align: center; }
 .src a { color: var(--tk-muted); }
 /* Judul grafik: satu gaya untuk semua halaman (sama dengan .ws-chart-t di Cerita). Rata tengah,
    satu baris, ukuran sama untuk semua judul pada lebar layar yang sama (1rem di laptop, sedikit
@@ -97,7 +95,8 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .stat-row b { display: block; font-size: 1.9rem; font-weight: 700; line-height: 1.1; color: var(--tk-ink); font-variant-numeric: tabular-nums; }
 .stat-row span { font-size: .88rem; color: var(--tk-soft); }
 .note { border-left: 3px solid var(--tk-accent); padding: .3rem 0 .3rem .9rem; color: var(--tk-soft); max-width: 46rem; }
-.swatches { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: center; font-size: .86rem; color: var(--tk-soft); margin: .5rem 0 .3rem; }
+.swatches { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: center; justify-content: center; text-align: center;
+  font-size: .86rem; color: var(--tk-soft); margin: .5rem 0 .3rem; }
 .swatches b { font-weight: 600; margin-right: .3rem; }
 .swatches span { display: inline-flex; align-items: center; gap: .4rem; }
 .swatches i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; box-shadow: inset 0 0 0 1px var(--tk-hairline); }
@@ -108,7 +107,8 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .swatches.center span { gap: .3rem; }
 .swatches.center i { width: 11px; height: 11px; border-radius: 2px; }
 .swatches em { font-style: normal; color: var(--tk-muted); flex-basis: 100%; margin-top: .1rem; }
-.legend-dots { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: center; font-size: .86rem; color: var(--tk-soft); margin: .5rem 0 .3rem; }
+.legend-dots { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; align-items: center; justify-content: center;
+  font-size: .86rem; color: var(--tk-soft); margin: .5rem 0 .3rem; }
 .legend-dots b { font-weight: 600; margin-right: .3rem; }
 .legend-dots span { display: inline-flex; align-items: center; gap: .4rem; font-size: .86rem; color: var(--tk-soft); }
 .legend-dots i { display: inline-block; border-radius: 50%; background: var(--tk-ink); opacity: .45; }
@@ -119,10 +119,6 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .pg-kicker { color: var(--pg-accent, var(--tk-accent));
   color: color-mix(in srgb, var(--pg-accent, var(--tk-accent)) 75%, var(--tk-ink)); text-transform: uppercase; letter-spacing: .3em;
   font-size: .72rem; font-weight: 600; margin: 0 0 -.6rem !important; }
-/* Grafik Plotly tampil sebagai panel seperti grafik di cerita: sudut membulat, garis tipis, bayangan. */
-[data-testid="stPlotlyChart"] { background: var(--tk-chart-bg); border: 1px solid var(--tk-hairline);
-  border-radius: 1rem; padding: .7rem .7rem .4rem; overflow: hidden;
-  box-shadow: 0 12px 32px -10px rgba(var(--tk-shadow-rgb), .16), 0 2px 6px rgba(var(--tk-shadow-rgb), var(--tk-shadow-a)); }
 /* Teks pilihan aktif pada segmented control/pills: warna aksen bawaan Streamlit hanya 4,0:1 (terang)
    dan 3,7:1 (gelap) di atas latar oranye pucatnya. accent_deep memberi 6,1:1 dan 6,2:1 (WCAG 1.4.3). */
 button[data-selected="true"], button[data-selected="true"] * { color: var(--tk-accent-deep) !important; }
@@ -223,9 +219,32 @@ def lede(text: str):
     st.html(f'<p class="lede">{text}</p>')
 
 
+# Kata tugas yang tetap huruf kecil dalam judul (kecuali di awal judul).
+_SMALL_WORDS = {"dan", "atau", "di", "ke", "dari", "pada", "per", "untuk", "dengan", "terhadap",
+                "yang", "vs", "oleh", "dalam", "sebagai", "&"}
+
+
+def title_case(text: str) -> str:
+    """Huruf kapital di awal setiap kata (juga tiap unsur kata ulang dan kata bergaris miring),
+    kecuali kata tugas. Singkatan (PCA, LQ, TW II) dan notasi seperti z-score dibiarkan."""
+    def cap(word):
+        if not word or not word[0].islower() or word.startswith("z-"):
+            return word
+        return word[0].upper() + word[1:]
+
+    out = []
+    for i, w in enumerate(text.split(" ")):
+        if i and w.lower() in _SMALL_WORDS:
+            out.append(w.lower())
+        else:
+            out.append("/".join("-".join(cap(x) for x in part.split("-")) if not part.startswith("z-") else part
+                                for part in w.split("/")))
+    return " ".join(out)
+
+
 def chart_title(text: str):
-    """Judul yang menyebut isi grafik (apa, satuan, cakupan), di atas figur.
-    Heading halaman bercerita; judul ini yang menjelaskan grafiknya."""
+    """Judul yang menyebut isi grafik (apa, satuan, cakupan), di atas figur, dalam huruf judul."""
+    text = title_case(text)
     st.html(f'<p class="chart-t" title="{escape(text)}">{text}</p>')
 
 

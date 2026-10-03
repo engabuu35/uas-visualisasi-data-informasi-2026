@@ -57,11 +57,12 @@ pages = [
     st.Page("views/tentang.py", title="Data & metode"),
 ]
 current = st.navigation(pages, position="top")
-# Latar halaman Jelajah mengikuti warna babaknya. Bukan di .stApp: theme.sync membaca latar itu.
+# Latar isi halaman Jelajah mengikuti warna babaknya; navbar tetap warna bawaan di semua halaman.
+# Bukan di .stApp: theme.sync membaca latar itu.
 PAGE_BG = {"struktur": 1, "peta": 2, "hierarki": 3, "tentang": 4}
 if current.url_path in PAGE_BG:
     i = PAGE_BG[current.url_path]
-    st.html(f'<style>[data-testid="stMain"], [data-testid="stHeader"] '
-            f'{{ background: var(--tk-page{i}); }} :root {{ --pg-accent: var(--tk-act{i}); }}</style>')
+    st.html(f'<style>[data-testid="stMain"] {{ background: var(--tk-page{i}); }} '
+            f':root {{ --pg-accent: var(--tk-act{i}); }}</style>')
 current.run()
 footer()
