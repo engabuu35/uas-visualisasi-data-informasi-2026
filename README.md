@@ -3,8 +3,8 @@
 Visualisasi struktur ekonomi 514 kabupaten/kota di Indonesia berdasarkan PDRB triwulanan 2026 dari BPS.
 Proyek UAS Visualisasi Data dan Informasi, Politeknik Statistika STIS.
 
-**Aplikasi:** _(isi URL Streamlit Community Cloud)_
-**Repositori:** _(isi URL GitHub)_
+- **Aplikasi:** https://514-wajah-ekonomi.streamlit.app/
+- **Repositori:** https://github.com/engabuu35/uas-visualisasi-data-informasi-2026
 
 ## Isi aplikasi
 
