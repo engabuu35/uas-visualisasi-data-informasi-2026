@@ -58,10 +58,11 @@ elif focus.startswith("Provinsi · "):
     focus_set = set(prov.index[prov == focus.split(" · ", 1)[1]])
 
 # --- biplot (dengan seleksi) -----------------------------------------------
+mobile = "Mobi" in st.context.headers.get("User-Agent", "")  # ponsel: tata letak grafik ringkas
 fig, trace_index = ch.pca_biplot(
     mv.scores, mv.explained, mv.loadings, mv.cluster, colors, names, prov,
     highlight=focus_set, outliers=mv.mahalanobis.where(mv.outlier).dropna(), show_arrows=arrows,
-    compact="Mobi" in st.context.headers.get("User-Agent", ""),  # ponsel: figur lebih pendek
+    compact=mobile,
 )
 # Biplot selebar kontainer (skala sumbu setara); teks sumbu dan scree berdampingan di bawahnya.
 left = st.container()
@@ -191,7 +192,7 @@ reset.button("Reset pilihan", key="pc_reset_btn",
              on_click=lambda: st.session_state.update(pc_reset=st.session_state.get("pc_reset", 0) + 1))
 if len(dims) >= 2:
     chart_title(f"Pangsa sektor tiap daerah (%), {tw} 2026")
-    st.plotly_chart(ch.parallel_coords(mv.shares, mv.cluster, colors, dims, selected), config={**ch.PLOT_CONFIG, "plotGlPixelRatio": 1},
+    st.plotly_chart(ch.parallel_coords(mv.shares, mv.cluster, colors, dims, selected, compact=mobile), config={**ch.PLOT_CONFIG, "plotGlPixelRatio": 1},
                     key=f"pc_chart_{st.session_state.get('pc_reset', 0)}")
     # Parallel coordinates Plotly tidak punya legenda bawaan; tanpa ini warna
     # klaster tidak bisa dibaca sama sekali.
@@ -200,7 +201,7 @@ if len(dims) >= 2:
         swatches("Garis", ["Daerah terpilih", "Lainnya"], [tk.accent_deep, tk.rule])
     else:
         swatches("Klaster", list(colors), list(colors.values()))
-    source("pangsa sektor (%) terhadap PDRB daerah; sumbu dipotong pada persentil 99,5")
+    source("pangsa sektor (%) terhadap PDRB daerah; nilai di atas persentil 99,5 diletakkan di puncak sumbu (≥)")
 else:
     st.info("Pilih minimal dua sektor.")
 

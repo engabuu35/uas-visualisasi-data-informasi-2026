@@ -272,7 +272,7 @@ def scree(explained, n_pc_outlier):
     return fig
 
 
-def parallel_coords(shares, cluster, colors, dims, highlight=None):
+def parallel_coords(shares, cluster, colors, dims, highlight=None, compact=False):
     """Parallel coordinates pangsa sektor. Garis terpilih digambar paling akhir
     agar berada di atas."""
     tk = tokens()
@@ -299,19 +299,23 @@ def parallel_coords(shares, cluster, colors, dims, highlight=None):
 
     def axis(c):
         top = float(np.ceil(d[c].quantile(0.995)))
-        # Tiga penanda saja (0, tengah, maks) dengan satuan %, agar angka tidak menimpa garis.
+        # Nilai di atas persentil 99,5 diletakkan di puncak sumbu (ditandai "≥"), agar garisnya
+        # tidak keluar dari area grafik. Tiga penanda saja (0, tengah, maks) dengan satuan %.
         vals = [0, round(top / 2), top]
-        return dict(label=SECTOR_SHORT[c], values=d[c], range=[0, top], tickvals=vals,
-                    ticktext=[f"{idn(v, 0)}%" for v in vals])
+        over = (d[c] > top).any()
+        return dict(label=SECTOR_SHORT[c], values=d[c].clip(upper=top), range=[0, top], tickvals=vals,
+                    ticktext=[f"{idn(v, 0)}%" for v in vals[:-1]] + [f"{'≥ ' if over else ''}{idn(top, 0)}%"])
 
     fig = go.Figure(go.Parcoords(
         line=dict(color=color, colorscale=scale, cmin=cmin, cmax=cmax),
         unselected=dict(line=dict(color=tk.rule, opacity=0.05)),
         dimensions=[axis(c) for c in dims],
-        labelfont=dict(size=13, color=tk.ink), tickfont=dict(size=11, color=tk.soft),
-        rangefont=dict(size=11, color=tk.soft), labelangle=-18, labelside="top",
+        labelfont=dict(size=11 if compact else 13, color=tk.ink), tickfont=dict(size=9 if compact else 11, color=tk.soft),
+        rangefont=dict(size=11, color=tk.soft), labelangle=-90 if compact else -18, labelside="top",
     ))
-    base_layout(fig, height=540, legend=False, margin=dict(l=48, r=48, t=96, b=28))
+    # Ponsel: label sumbu tegak agar tidak saling menimpa.
+    base_layout(fig, height=560 if compact else 540, legend=False,
+                margin=dict(l=34, r=20, t=170, b=28) if compact else dict(l=48, r=48, t=96, b=28))
     return fig
 
 
