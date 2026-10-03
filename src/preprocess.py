@@ -16,9 +16,8 @@ import pandas as pd
 
 from config import PERIODS, SECTOR_CODES, TOTAL_LABEL
 
-# Kode KBLI di depan nama kategori: "A", "M,N", "R,S,T,U".
-# Harus diikuti spasi; tanpa syarat ini "Produk Domestik..." ikut terbaca
-# sebagai kode "P" dan bertabrakan dengan Jasa Pendidikan.
+# Kode KBLI di depan nama kategori ("A", "M,N", "R,S,T,U"), wajib diikuti spasi
+# agar "Produk Domestik..." tidak terbaca sebagai kode "P".
 _CODE_RE = re.compile(r"^([A-Z](?:,[A-Z])*)\s+(.+)$")
 
 
@@ -136,15 +135,15 @@ def location_quotient(values: pd.DataFrame) -> pd.DataFrame:
 
 
 def growth_qtq(long: pd.DataFrame) -> pd.DataFrame:
-    """Pertumbuhan TW II terhadap TW I (%), per wilayah x sektor (+ TOTAL).
-
-    Catatan: q-to-q masih memuat pola musiman (mis. panen raya di TW I).
-    """
-    sub = long[long["periode"].isin(PERIODS)]
+    """Pertumbuhan TW II terhadap TW I (%), per wilayah x sektor, ditambah TOTAL
+    (jumlah 17 sektor, sama dengan penyebut pangsa)."""
+    sub = long[long["periode"].isin(PERIODS) & (long["kode_sektor"] != "TOTAL")]
     wide = sub.pivot_table(index=["kode", "kode_sektor"], columns="periode", values="nilai")
     q1, q2 = wide["Triwulan I"], wide["Triwulan II"]
-    rate = (q2 / q1.where(q1 > 0) - 1) * 100
-    return rate.unstack("kode_sektor")
+    rate = ((q2 / q1.where(q1 > 0) - 1) * 100).unstack("kode_sektor")
+    tot = wide.groupby(level="kode").sum()
+    rate["TOTAL"] = (tot["Triwulan II"] / tot["Triwulan I"].where(tot["Triwulan I"] > 0) - 1) * 100
+    return rate
 
 
 def concentration(values: pd.Series) -> pd.DataFrame:

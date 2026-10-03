@@ -8,22 +8,29 @@ import analysis as an
 import charts as ch
 import data
 from charts import idn
-from config import CONTEXT_GRAY, LISA_COLORS, PERIODS, SECTOR_CODES, SECTOR_SHORT
-from ui import lede, source, swatches
+import theme
+from config import GEO_SOURCE, PERIODS, SECTOR_CODES, SECTOR_SHORT
+from ui import chart_title, lede, page_kicker, source, swatches
 
 reg = data.regions()
+TK = theme.tokens()
 geo = data.geojson()
 
+page_kicker("Jelajah · Peta")
 st.title("Peta spesialisasi daerah")
+st.html(
+    '<style>[data-testid="stMain"] p.lede { max-width: none; text-align: justify; text-justify: inter-word; '
+    "hyphens: none; word-break: normal; overflow-wrap: normal; }</style>"
+)
 lede(
-    "Warna peta selalu menunjukkan <b>rasio</b> (porsi, LQ, atau laju pertumbuhan), bukan nilai "
-    "rupiah. Kalau yang diwarnai nilai rupiah, daerah yang luas atau padat akan selalu tampak "
-    "menonjol. Besaran rupiahnya ditampilkan terpisah sebagai lingkaran, dan lapisan ini bisa "
-    "dimatikan."
+    "Warna pada peta menunjukkan <b>rasio</b>, seperti porsi sektor, location quotient (LQ), atau laju "
+    "pertumbuhan, bukan nilai rupiah. Dengan begitu, perbandingan antarwilayah tidak didominasi oleh "
+    "daerah yang memang memiliki nilai PDRB lebih besar. Nilai rupiah ditampilkan terpisah sebagai "
+    "lingkaran dan dapat disembunyikan untuk melihat pola spesialisasi dengan lebih jelas."
 )
 
 # --- kontrol ----------------------------------------------------------------
-r1 = st.columns([1.6, 1.4, 1])
+r1 = st.columns([2.1, 1.3, 1])
 indicator = r1[0].segmented_control("Indikator", list(data.INDICATORS), default="Location quotient",
                                     key="map_ind") or "Location quotient"
 sector_opts = SECTOR_CODES + (["TOTAL"] if indicator == "Pertumbuhan q-to-q" else [])
@@ -32,7 +39,7 @@ sector = r1[1].selectbox("Lapangan usaha", sector_opts, index=1,
                          key=f"map_sector_{indicator == 'Pertumbuhan q-to-q'}")
 if indicator == "Pertumbuhan q-to-q":
     period = "Triwulan II"
-    r1[2].markdown("<div style='padding-top:2rem;color:#B5AEA6'>TW II vs TW I</div>", unsafe_allow_html=True)
+    r1[2].markdown("<div style='padding-top:2rem;color:var(--tk-soft)'>TW II vs TW I</div>", unsafe_allow_html=True)
 else:
     period = r1[2].segmented_control("Triwulan", PERIODS, default="Triwulan II", key="map_period") \
         or "Triwulan II"
@@ -42,7 +49,7 @@ method_opts = {
     "Location quotient": ["Ambang bermakna", "Natural breaks (Jenks)", "Kuantil"],
     "Pertumbuhan q-to-q": ["Ambang bermakna", "Kuantil"],
 }[indicator]
-r2 = st.columns([1.6, 1.4, 1])
+r2 = st.columns([2.1, 1.3, 1])
 method = r2[0].segmented_control("Klasifikasi", method_opts, default=method_opts[0],
                                  key=f"map_method_{indicator}") or method_opts[0]
 province = r2[1].selectbox("Perbesar ke provinsi", ["Seluruh Indonesia"] + sorted(reg["provinsi"].unique()),
@@ -74,7 +81,8 @@ else:
     labels = None
     kind = "signed" if indicator == "Pertumbuhan q-to-q" else "sequential"
 
-fmt = "{:.2f}" if indicator == "Location quotient" else "{:.1f}"
+# Pangsa dan pertumbuhan dalam persen: satuannya ikut tertulis di setiap label kelas legenda.
+fmt = "{:.2f}" if indicator == "Location quotient" else "{:.1f}%"
 if labels is None:
     df["kelas"] = an.classify(df["nilai"], breaks, fmt)
     labels = list(df["kelas"].cat.categories)
@@ -87,11 +95,11 @@ else:
     colors = ch.class_colors(len(labels), kind)
 if kind == "diverging" and len(labels) == 5:
     # Simetris: langkah yang sama jauhnya dari titik tengah di kedua lengan.
-    colors = [ch.DIV_BLUE[0], ch.DIV_BLUE[1], ch.DIV_MID, ch.DIV_ORANGE[1], ch.DIV_ORANGE[2]]
+    colors = [TK.div_neg[0], TK.div_neg[1], TK.div_mid, TK.div_pos[1], TK.div_pos[2]]
 df["kelas"] = df["kelas"].astype(object).where(df["kelas"].notna(), "Tidak dapat dihitung")
 if (df["kelas"] == "Tidak dapat dihitung").any():
     labels = labels + ["Tidak dapat dihitung"]
-    colors = colors + [CONTEXT_GRAY]
+    colors = colors + [TK.na]
 
 unit = {"Pangsa sektor": "%", "Location quotient": "", "Pertumbuhan q-to-q": "%"}[indicator]
 sector_name = "PDRB" if sector == "TOTAL" else SECTOR_SHORT[sector]
@@ -108,13 +116,18 @@ title_ind = {"Pangsa sektor": f"Porsi {sector_lc} dalam PDRB daerah",
              "Location quotient": f"Seberapa terkonsentrasi {sector_lc} dibanding nasional",
              "Pertumbuhan q-to-q": f"Perubahan {sector_lc} TW II terhadap TW I"}[indicator]
 st.subheader(title_ind)
+# Judul grafik satu baris: indikator, sektor, dan satuan. Periodenya ditulis di baris sumber.
+tw = period.replace("Triwulan", "TW")
+when = "TW II terhadap TW I" if indicator == "Pertumbuhan q-to-q" else f"{tw} 2026"
+label_ind = {"Pangsa sektor": "Pangsa", "Location quotient": "LQ", "Pertumbuhan q-to-q": "Pertumbuhan"}[indicator]
+chart_title(f"{label_ind} {sector_lc}" + ("" if unit == "" else f" ({unit})"))
 
 show_choro = "Choropleth" in (layers or [])
 show_bubble = "Lingkaran PDRB" in (layers or [])
 plot_df = df if show_choro else df.assign(kelas="Tidak dapat dihitung")
 fig = ch.choropleth_classes(
     geo, plot_df, "kelas", labels if show_choro else ["Tidak dapat dihitung"],
-    colors if show_choro else ["#F3ECE3"],
+    colors if show_choro else [TK.land],
     ["kabkota", "provinsi", "nilai_txt", "pdrb"], hover,
     view_regions=view, height=560, highlight=highlight, width_px=1000,
 )
@@ -125,14 +138,15 @@ if show_bubble:
                    f"{sector_name}: " + "Rp%{customdata[2]:,.1f} miliar<extra></extra>")
 st.plotly_chart(fig, config=ch.MAP_CONFIG, key="main_map")
 if show_choro:
-    swatches(f"{indicator} · {method.lower()}", labels, colors)
+    swatches("Location quotient (LQ, tanpa satuan)" if indicator == "Location quotient"
+             else f"{indicator} (%) · {method.lower()}", labels, colors)
 
 if show_bubble:
     sizes = ch.bubble_legend(df["pdrb"])
     dots = "".join(
         f'<span><i style="width:{max(s, 3):.0f}px;height:{max(s, 3):.0f}px"></i>Rp{idn(v, 0)} miliar</span>'
         for v, s in sizes)
-    st.html(f'<div class="legend-dots">Luas lingkaran = nilai {sector_lc}, {period}: {dots}</div>')
+    st.html(f'<div class="legend-dots"><b>Luas lingkaran = Nilai {sector_name}, {period}</b>{dots}</div>')
 
 why = {
     "Ambang bermakna": "Batas kelas dipilih karena maknanya, bukan karena sebaran datanya. Untuk LQ, "
@@ -144,7 +158,7 @@ why = {
     "Kuantil": "Setiap kelas berisi jumlah daerah yang kurang lebih sama. Perbedaan peringkat jadi mudah "
                "dilihat, tetapi rentang nilai antarkelas bisa sangat timpang.",
 }[method]
-source(f"{why} Batas wilayah: data pendukung non-BPS")
+source(f"{indicator} {sector_lc}, {when}. {why} Batas wilayah: {GEO_SOURCE}")
 
 # --- ringkasan + tampilan tabel ---------------------------------------------
 in_view = df.loc[view.index].dropna(subset=["nilai"])
@@ -152,7 +166,7 @@ top = in_view.nlargest(5, "nilai")
 a, b = st.columns([1, 1.2], gap="large")
 with a:
     where = "Indonesia" if province == "Seluruh Indonesia" else province
-    st.markdown(f"**Lima tertinggi di {where}**")
+    st.html(f'<p style="height:2.5rem;margin:0;display:flex;align-items:center;font-weight:600">Lima tertinggi di {where}</p>')
     for _, r in top.iterrows():
         st.markdown(f"- {r['kabkota']} ({r['provinsi']}): **{r['nilai_txt']}**")
     if indicator == "Location quotient":
@@ -170,31 +184,51 @@ with b:
 # --- LISA -------------------------------------------------------------------
 st.header("Apakah pola ini mengelompok?")
 mo = data.moran(indicator, sector, period)
-verdict = ("mengelompok secara spasial: nilai tinggi cenderung bertetangga dengan nilai tinggi"
-           if mo["I"] > 0 and mo["p"] < 0.05 else
-           "tidak menunjukkan pengelompokan yang berarti" if mo["p"] >= 0.05 else
-           "cenderung berselang-seling: nilai tinggi bertetangga dengan nilai rendah")
-st.markdown(
-    f"Moran's I untuk {indicator.lower()} {sector_lc} = **{idn(mo['I'], 3)}** "
-    f"(nilai harapan jika acak {idn(mo['expected'], 3)}; p = {idn(mo['p'], 3)}). Artinya, polanya "
-    f"{verdict}. Peta di bawah hanya mewarnai daerah yang signifikan (p < 0,05)."
-)
+# Kalimat disusun dari indikator, sektor, dan hasil uji, sehingga ikut berubah saat kontrol diganti.
+subject, short = {
+    "Location quotient": (f"nilai <em>location quotient</em> (LQ) {sector_lc}", "LQ"),
+    "Pangsa sektor": (f"porsi {sector_lc} dalam PDRB daerah", "porsi"),
+    "Pertumbuhan q-to-q": (f"pertumbuhan {sector_lc}", "pertumbuhan"),
+}[indicator]
+significant = mo["p"] < 0.05
+if mo["I"] > 0 and significant:
+    verdict = (f"cenderung mengelompok secara spasial. Daerah dengan {short} yang tinggi cenderung berdekatan "
+               f"dengan daerah yang juga tinggi, begitu pula daerah dengan {short} rendah.")
+elif not significant:
+    verdict = "tidak menunjukkan pengelompokan spasial yang berarti."
+else:
+    verdict = (f"cenderung berselang-seling: daerah dengan {short} tinggi bertetangga dengan daerah yang "
+               f"{short} rendah.")
+with st.container(key="moran_text"):
+    st.markdown(
+        f"**Moran’s I = {idn(mo['I'], 3)}** menunjukkan bahwa {subject} {verdict} "
+        f"Hasil ini {'signifikan' if significant else 'tidak signifikan'} (p = {idn(mo['p'], 3)}); jika polanya acak, "
+        f"nilai Moran’s I yang diharapkan sekitar {idn(mo['expected'], 3)}. Pada peta, hanya daerah dengan hasil "
+        f"analisis lokal yang signifikan (p < 0,05) yang diberi warna, tanpa koreksi uji berganda "
+        f"(lihat Data & metode).",
+        unsafe_allow_html=True,
+    )
 ldf = df.loc[mo["kode"]].copy()
 ldf["kuadran"] = mo["quadrant"]
-lisa_labels = [q for q in LISA_COLORS if q in set(ldf["kuadran"])]
+lisa_labels = [q for q in TK.lisa if q in set(ldf["kuadran"])]
 c1, c2 = st.columns([1.5, 1], gap="large")
 with c1:
+    chart_title(f"LISA {short} {sector_lc}")
     fig = ch.choropleth_classes(
-        geo, ldf, "kuadran", lisa_labels, [LISA_COLORS[q] for q in lisa_labels],
+        geo, ldf, "kuadran", lisa_labels, [TK.lisa[q] for q in lisa_labels],
         ["kabkota", "provinsi", "kuadran", "nilai_txt"],
         "<b>%{customdata[0]}</b><br>%{customdata[1]}<br>%{customdata[2]}<br>"
         "Nilai: %{customdata[3]}<extra></extra>",
         view_regions=view, height=480, highlight=highlight, width_px=580,
     )
     st.plotly_chart(fig, config=ch.MAP_CONFIG, key="lisa_map")
-    swatches("LISA", lisa_labels, [LISA_COLORS[q] for q in lisa_labels], "hanya p < 0,05")
-    source("bobot 6 tetangga terdekat, 999 permutasi bersyarat")
+    swatches("LISA", lisa_labels, [TK.lisa[q] for q in lisa_labels], "hanya p < 0,05", center=True)
+    source(f"{short} {sector_lc}, {when}; hanya p < 0,05 yang diwarnai; bobot 6 tetangga terdekat, "
+           "999 permutasi bersyarat")
 with c2:
+    chart_title(f"Moran scatterplot {short}")
     st.plotly_chart(ch.moran_scatter(mo["z"], mo["lag"], np.asarray(mo["quadrant"]),
                                      ldf["kabkota"].to_numpy(), mo["I"]), config=ch.PLOT_CONFIG)
-    st.caption("Moran scatterplot: kemiringan garis sama dengan Moran's I.")
+    with st.container(key="moran_caption"):
+        st.caption("Moran scatterplot: kemiringan garis sama dengan Moran's I.")
+    source(f"{short} {sector_lc}, {when}; bobot 6 tetangga terdekat")

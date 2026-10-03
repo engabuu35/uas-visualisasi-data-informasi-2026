@@ -1,13 +1,7 @@
 """Grafik SVG buatan tangan untuk halaman Cerita.
 
-Mengapa bukan Plotly di sini: SVG inline terbaca pembaca layar, tajam di
-kerapatan piksel berapa pun, bisa dianimasikan dengan CSS saja, dan peta
-kecil-kecil (small multiples) cukup memakai <use> ke satu definisi geometri.
-Enam peta Plotly berarti enam salinan GeoJSON 1 MB di halaman yang sama.
-Halaman Jelajah tetap memakai Plotly karena di sana interaksinya lebih kaya.
-
-Semua fungsi menerima angka yang sudah dihitung di story.py; tidak ada
-perhitungan statistik di sini.
+SVG inline terbaca pembaca layar, tajam di layar apa pun, dan small multiples cukup
+merujuk satu definisi geometri (<use>). Angka dihitung di story.py, bukan di sini.
 """
 
 from __future__ import annotations
@@ -15,13 +9,12 @@ from __future__ import annotations
 import math
 from html import escape
 
-import numpy as np
 import streamlit as st
 from shapely.geometry import shape
 
 import data
 from charts import idn, signed
-from config import CONTEXT_GRAY, INK, INK_MUTED, INK_SOFT, LAND, LAND_EDGE, LISA_COLORS, RULE
+from theme import tokens
 
 # Bingkai peta: kotak batas Indonesia (derajat) diproyeksikan equirectangular.
 # Di lintang khatulistiwa distorsinya diabaikan untuk peta ikhtisar.
@@ -79,8 +72,47 @@ def _tip(*lines) -> str:
     return escape("\n".join(lines), quote=True)
 
 
-def _land(fill=LAND, edge=LAND_EDGE, width=0.6) -> str:
+def _land(fill=None, edge=None, width=0.6) -> str:
+    tk = tokens()
+    fill, edge = fill or tk.land, edge or tk.land_edge
     return f'<use href="#ws-land" fill="{fill}" stroke="{edge}" stroke-width="{width}"/>'
+
+
+# ---------------------------------------------------------------------------
+# Ikon kartu cerita: hiasan (aria-hidden), garis 24 px dengan currentColor.
+# ---------------------------------------------------------------------------
+_ICON_PATHS = {
+    "uang": '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>'
+            '<path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    "separuh": '<circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 7l4.5 0M12 11h6.5M12 15h6M12 19h3"/>',
+    "peringkat": '<path d="M4 20h16"/><rect x="5" y="11" width="4" height="9" rx="1"/>'
+                 '<rect x="10" y="6" width="4" height="14" rx="1"/><rect x="15" y="14" width="4" height="6" rx="1"/>',
+    "lokasi": '<path d="M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.3"/>',
+    "pola": '<circle cx="6" cy="7" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="18" cy="7" r="2"/>'
+            '<circle cx="6" cy="16" r="2"/><circle cx="12" cy="16" r="2"/><circle cx="18" cy="16" r="2"/>',
+    "tani": '<path d="M12 21v-9"/><path d="M12 12c0-4.2 3-7 8-7 0 4.2-3 7-8 7z"/><path d="M12 14.5c0-3.2-2.6-5.5-7-5.5 0 3.2 2.6 5.5 7 5.5z"/>',
+    "gedung": '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/><path d="M10.5 21v-3h3v3"/>',
+    "pemerintah": '<path d="M3 9l9-5 9 5"/><path d="M5.5 9.5v8M10 9.5v8M14 9.5v8M18.5 9.5v8"/><path d="M4 18h16M3 21h18"/>',
+    "peta": '<path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',
+    "grafik": '<path d="M4 4v16h16"/><path d="M7.5 15l3.5-4 3 3 5-6"/>',
+    "naik": '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    "turun": '<path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
+    "sektor": '<path d="M4 20h16"/><path d="M7 17V9M11 17V5M15 17v-5M19 17V8"/>',
+    "datar": '<circle cx="12" cy="12" r="9"/><path d="M7.5 12h9"/>',
+    "peringatan": '<path d="M12 3.5l9 16H3z"/><path d="M12 10v4.5"/><path d="M12 17.3v.2"/>',
+    "timbangan": '<path d="M12 4v16M8 20h8M5 8h14"/><path d="M5 8l-3 6.5a3 3 0 0 0 6 0z"/><path d="M19 8l-3 6.5a3 3 0 0 0 6 0z"/>',
+    "jaringan": '<circle cx="6" cy="6.5" r="2.5"/><circle cx="18" cy="7.5" r="2.5"/><circle cx="12" cy="18" r="2.5"/>'
+                '<path d="M8.5 6.7l7 .6M7.3 8.7l3.5 7M16.8 9.7l-3.6 6.2"/>',
+    "tambang": '<path d="M4 9C7.5 5.2 16.5 5.2 20 9"/><path d="M12 6.2L6.5 20.5"/>',
+    "hierarki": '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/>'
+                '<rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
+    "tabel": '<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10"/>',
+}
+ICONS = {
+    k: ('<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" '
+        f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{d}</svg>')
+    for k, d in _ICON_PATHS.items()
+}
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +132,7 @@ def hero_map(f: dict, regions_latlon: dict, color: str) -> str:
         r = r_max * math.sqrt(vals[k] / vmax)
         dots.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{max(r, 0.9):.2f}"/>')
     return (f'<svg viewBox="0 0 {MAP_W} {MAP_H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'
-            f'{_land("#1B2128", "#262C33", 0.5)}'
+            f'{_land(width=0.5)}'
             f'<g fill="{color}" fill-opacity="0.55" stroke="{color}" stroke-opacity="0.9" stroke-width="0.6">'
             f'{"".join(dots)}</g></svg>')
 
@@ -113,6 +145,7 @@ def concentration(f: dict, accent: str, compact: bool = False) -> str:
     """compact=True: varian ponsel. viewBox yang lebih sempit membuat teks
     12 px tetap sekitar 11 px di layar 360 px; versi lebar akan mengecil
     menjadi ~6 px dan tidak terbaca."""
+    tk = tokens()
     y = f["conc_y"]
     n = len(y)
     W, H, L, R, T, B = (360, 270, 40, 12, 14, 40) if compact else (640, 400, 52, 18, 18, 46)
@@ -141,13 +174,13 @@ def concentration(f: dict, accent: str, compact: bool = False) -> str:
 <svg viewBox="0 0 {W} {H}" role="img" aria-label="{escape(aria)}" class="ws-xhair"
      data-x0="{L}" data-x1="{W - R}" data-y0="{T}" data-y1="{H - B}" data-ys="{ys}" data-names="{names}">
   {grid}{xt}
-  <line x1="{X(0)}" y1="{Y(0)}" x2="{X(n)}" y2="{Y(100)}" stroke="{CONTEXT_GRAY}" stroke-width="1.5" stroke-dasharray="3 5"/>
+  <line x1="{X(0)}" y1="{Y(0)}" x2="{X(n)}" y2="{Y(100)}" stroke="{tk.context}" stroke-width="1.5" stroke-dasharray="3 5"/>
   <text x="{lx:.1f}" y="{ly:.1f}" class="ws-note" text-anchor="middle" transform="rotate({ang:.1f} {lx:.1f} {ly:.1f})">seandainya merata</text>
-  <path d="M{X(0)} {Y(50):.1f}H{X(nh):.1f}V{Y(0)}" fill="none" stroke="{INK_MUTED}" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M{X(0)} {Y(50):.1f}H{X(nh):.1f}V{Y(0)}" fill="none" stroke="{tk.muted}" stroke-width="1" stroke-dasharray="4 4"/>
   <path d="{line}" pathLength="1" class="ws-draw" fill="none" stroke="{accent}" stroke-width="2.5" stroke-linejoin="round"/>
-  <circle cx="{X(nh):.1f}" cy="{Y(50):.1f}" r="5" fill="{accent}" stroke="#0F1318" stroke-width="2"/>
+  <circle cx="{X(nh):.1f}" cy="{Y(50):.1f}" r="5" fill="{accent}" stroke="{tk.paper}" stroke-width="2"/>
   <text x="{X(nh) + 12:.1f}" y="{Y(50) + fig_dy:.1f}" class="ws-hero-fig"><tspan class="ws-count" data-to="{nh}">{nh}</tspan> daerah</text>
-  <text x="{X(nh) + 12:.1f}" y="{Y(50) + note_dy:.1f}" class="ws-note">= separuh PDRB nasional</text>
+  <text x="{X(nh) + 12:.1f}" y="{Y(50) + note_dy:.1f}" class="ws-note">= separuh total PDRB</text>
   <text x="{L + pw / 2}" y="{H - 6}" class="ws-axis" text-anchor="middle">{axis_x}</text>
   <text x="11" y="{T + ph / 2}" class="ws-axis" text-anchor="middle" transform="rotate(-90 11 {T + ph / 2})">PDRB kumulatif</text>
   <line class="ws-xh-line" x1="0" x2="0" y1="{T}" y2="{H - B}"/>
@@ -163,6 +196,7 @@ def concentration(f: dict, accent: str, compact: bool = False) -> str:
 def dumbbell(f: dict, compact: bool = False) -> str:
     """Lebar: label di kiri. Ringkas (ponsel): label di atas setiap baris,
     supaya sumbu nilai memakai seluruh lebar layar."""
+    tk = tokens()
     rows = sorted(f["clusters"], key=lambda r: r["pct_pdrb"])
     if compact:
         W, L, R, T, rh = 360, 12, 16, 40, 54
@@ -194,14 +228,17 @@ def dumbbell(f: dict, compact: bool = False) -> str:
   <g class="ws-row" style="--i:{i}" data-tip="{tip}" tabindex="0">
     <rect x="0" y="{top:.1f}" width="{W}" height="{rh}" fill="transparent"/>
     {label}
-    <line x1="{a:.1f}" x2="{b:.1f}" y1="{cy:.1f}" y2="{cy:.1f}" stroke="{RULE}" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="{b:.1f}" cy="{cy:.1f}" r="7.5" fill="{color}" stroke="#141A21" stroke-width="2"/>
-    <circle cx="{a:.1f}" cy="{cy:.1f}" r="7" fill="none" stroke="{INK_SOFT}" stroke-width="2"/>
+    <line x1="{a:.1f}" x2="{b:.1f}" y1="{cy:.1f}" y2="{cy:.1f}" stroke="{tk.rule}" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="{b:.1f}" cy="{cy:.1f}" r="7.5" fill="{color}" stroke="{tk.surface}" stroke-width="2"/>
+    <circle cx="{a:.1f}" cy="{cy:.1f}" r="7" fill="none" stroke="{tk.soft}" stroke-width="2"/>
   </g>""")
-    legend = (f'<g class="ws-legend"><circle cx="{L + 6}" cy="14" r="6" fill="#141A21" stroke="{INK_SOFT}" stroke-width="2"/>'
-              f'<text x="{L + 18}" y="18" class="ws-sub">porsi jumlah daerah</text>'
-              f'<circle cx="{L + 160}" cy="14" r="7" fill="{INK_SOFT}"/>'
-              f'<text x="{L + 172}" y="18" class="ws-sub">porsi PDRB nasional</text></g>')
+    # Ponsel (W=360) hanya muat label pendek; desktop memakai label selengkap keterangan di atas grafik.
+    t1, t2, dx = (("jumlah daerah", "kontribusi PDRB", 110) if compact
+                  else ("persentase jumlah daerah", "kontribusi terhadap total PDRB", 200))
+    legend = (f'<g class="ws-legend"><circle cx="{L + 6}" cy="14" r="6" fill="{tk.surface}" stroke="{tk.soft}" stroke-width="2"/>'
+              f'<text x="{L + 18}" y="18" class="ws-sub">{t1}</text>'
+              f'<circle cx="{L + dx}" cy="14" r="7" fill="{tk.soft}"/>'
+              f'<text x="{L + dx + 12}" y="18" class="ws-sub">{t2}</text></g>')
     aria = "Dumbbell per pola ekonomi: " + "; ".join(
         f"{r['klaster']}, {idn(r['pct_regions'])}% daerah dan {idn(r['pct_pdrb'])}% PDRB" for r in reversed(rows))
     return (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{escape(aria)}">'
@@ -216,6 +253,7 @@ def cluster_maps(f: dict) -> str:
     """Satu warna per peta. Enam warna dalam satu peta gagal uji pemisahan
     buta warna untuk semua pasangan; small multiples menghindari masalah itu
     sekaligus membuat sebaran setiap pola terbaca sendiri-sendiri."""
+    tk = tokens()
     by = {}
     for k, c in f["cluster_of"].items():
         by.setdefault(c, []).append(k)
@@ -237,7 +275,7 @@ def cluster_maps(f: dict) -> str:
 <div class="ws-mini" style="--i:{i}">
   <p class="ws-mini-t"><i style="background:{r["color"]}"></i>{escape(r["klaster"])} <span>{r["n"]}</span></p>
   <svg viewBox="0 0 {MAP_W} {MAP_H}" role="img" aria-label="{escape(aria)}">
-    {_land()}<g fill="{r["color"]}" stroke="#0F1318" stroke-width="0.6">{uses}</g>
+    {_land()}<g fill="{r["color"]}" stroke="{tk.paper}" stroke-width="0.6">{uses}</g>
     <g fill="none" stroke="{r["color"]}" stroke-width="2.4">{dots}</g>
   </svg>
 </div>''')
@@ -253,6 +291,7 @@ def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
     """Batang horizontal dari garis nol. Di atas acuan = aksen babak (makna:
     lebih cepat dari nasional), di bawah = abu konteks. Nilai di dalam batang
     bila batangnya cukup panjang (>= 55 px), di luar bila pendek."""
+    tk = tokens()
     if compact:  # label di atas batang, batang memakai seluruh lebar
         label_w, row_h = 12, max(row_h, 36)
     W, R, T = (360, 46, 30) if compact else (640, 54, 30)
@@ -268,7 +307,7 @@ def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
         v = r["value"]
         xa, xb = sorted((x0, X(v)))
         w = xb - xa
-        fill = accent if v >= reference else CONTEXT_GRAY
+        fill = accent if v >= reference else tk.context
         txt = signed(v) + "%"
         inside = w >= 55
         tx = (xb - 6 if inside else xb + 6) if v >= 0 else (xa + 6 if inside else xa - 6)
@@ -292,11 +331,11 @@ def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
     <text x="{tx:.1f}" y="{by + bh / 2 + 4.5:.1f}" class="{tcls}" text-anchor="{anchor}">{txt}</text>
   </g>''')
     xr = X(reference)
-    ref = (f'<line x1="{xr:.1f}" x2="{xr:.1f}" y1="{T - 6}" y2="{H - 22}" stroke="{INK}" stroke-width="1" stroke-dasharray="3 4"/>'
+    ref = (f'<line x1="{xr:.1f}" x2="{xr:.1f}" y1="{T - 6}" y2="{H - 22}" stroke="{tk.ink}" stroke-width="1" stroke-dasharray="3 4"/>'
            f'<text x="{xr:.1f}" y="{T - 12}" class="ws-note" text-anchor="middle">{escape(ref_label)} {signed(reference)}%</text>')
     aria = "Pertumbuhan TW II terhadap TW I: " + "; ".join(f"{r['label']} {signed(r['value'])}%" for r in rows)
     return (f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{escape(aria)}">'
-            f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="{T - 4}" y2="{H - 22}" stroke="{RULE}"/>'
+            f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="{T - 4}" y2="{H - 22}" stroke="{tk.rule}"/>'
             f'{"".join(body)}{ref}</svg>')
 
 
@@ -305,18 +344,21 @@ def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
 # ---------------------------------------------------------------------------
 
 def lisa_map(f: dict) -> str:
+    tk = tokens()
     uses = []
     for k, q in f["lisa"].items():
         tip = _tip(f["names"][k], f["provinces"][k], f"Pertanian: {idn(f['agri_share'][k])}% PDRB", q)
-        uses.append(f'<use href="#ws-r{k}" fill="{LISA_COLORS[q]}" data-tip="{tip}"/>')
+        uses.append(f'<use href="#ws-r{k}" fill="{tk.lisa[q]}" data-tip="{tip}"/>')
     c = f["lisa_counts"]
-    aria = ("Peta LISA porsi pertanian. " + "; ".join(f"{q}: {c.get(q, 0)} daerah" for q in LISA_COLORS) + ".")
+    aria = ("Peta LISA porsi pertanian. " + "; ".join(f"{q}: {c.get(q, 0)} daerah" for q in tk.lisa) + ".")
     return (f'<svg viewBox="0 0 {MAP_W} {MAP_H}" role="img" aria-label="{escape(aria)}">'
-            f'{_land()}<g stroke="#0F1318" stroke-width="0.6">{"".join(uses)}</g></svg>')
+            f'{_land()}<g stroke="{tk.paper}" stroke-width="0.6">{"".join(uses)}</g></svg>')
 
 
 def lisa_legend(f: dict) -> str:
-    c = f["lisa_counts"]
-    items = "".join(f'<span><i style="background:{col}"></i>{escape(q)} <em>{c.get(q, 0)}</em></span>'
-                    for q, col in LISA_COLORS.items())
+    # Jumlah daerah per kelas sengaja tidak ditulis di legenda agar rapi;
+    # angkanya tetap dibacakan lewat aria-label peta.
+    tk = tokens()
+    items = "".join(f'<span><i style="background:{col}"></i>{escape(q)}</span>'
+                    for q, col in tk.lisa.items())
     return f'<div class="ws-swatches">{items}</div>'

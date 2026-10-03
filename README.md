@@ -13,10 +13,10 @@ cerita lebih dulu, lalu dipersilakan menjelajah sendiri.
 
 | Halaman | Topik ujian | Teknik |
 |---|---|---|
-| **Cerita** | narasi | scrollytelling 4 babak, SVG buatan tangan: kurva konsentrasi, dumbbell + small multiples klaster, batang pertumbuhan, peta LISA; tooltip dan crosshair |
-| **Struktur ekonomi** | (a) multivariat | PCA biplot, parallel coordinates, heatmap terklaster (Ward), profil klaster, pencilan Mahalanobis; *brushing & linking* dari biplot ke semua tampilan |
+| **Potret PDRB** | narasi | scrollytelling 4 babak, SVG buatan tangan: kurva konsentrasi, dumbbell + small multiples klaster, batang pertumbuhan, peta LISA; tooltip dan crosshair |
+| **Pola ekonomi** | (a) multivariat | PCA biplot, parallel coordinates, heatmap terklaster (Ward), profil klaster, pencilan Mahalanobis; *brushing & linking* dari biplot ke semua tampilan |
 | **Peta** | (e) geospasial | choropleth rasio (pangsa / LQ / pertumbuhan) dengan 3 metode klasifikasi, simbol proporsional, kontrol lapisan, zoom ke provinsi, Moran's I + peta LISA |
-| **Hierarki** | (c) berhierarki | treemap dan icicle 5 tingkat (Indonesia → pulau → provinsi → kab/kota → sektor, atau dibalik); ukuran = PDRB, warna = pertumbuhan; breadcrumb |
+| **Wilayah & sektor** | (c) berhierarki | treemap dan icicle 5 tingkat (Indonesia → pulau → provinsi → kab/kota → sektor, atau dibalik); ukuran = PDRB, warna = pertumbuhan; breadcrumb |
 | **Data & metode** | – | sumber, pra-pemrosesan, rumus, keterbatasan, unduhan data olahan |
 
 Ketentuan minimal Lampiran A yang dipenuhi:
@@ -39,7 +39,7 @@ Ketentuan minimal Lampiran A yang dipenuhi:
 | URL | https://www.bps.go.id/id/statistics-table/2/Mjc3NSMy/pdrb-triwulanan-atas-dasar-harga-konstan-2010-100-menurut-17-kategori-lapangan-usaha-di-kabupaten-kota-milyar-rupiah.html |
 | Diakses | 27 September 2026 |
 | Cakupan terisi | Triwulan I dan II 2026 |
-| Batas wilayah | _(isi sumber kabkota.geojson: penyedia, tahun, URL)_. Ini data pendukung non-BPS dengan kode wilayah BPS 2019. |
+| Batas wilayah | Bahan praktikum Sistem Informasi Geografis, Dr. Rindang Bangun Prasetyo, Politeknik Statistika STIS (data pendukung non-BPS, kode wilayah BPS 2019). |
 
 ## Struktur
 
@@ -80,13 +80,19 @@ streamlit run app.py
 
 `data/processed/` ikut di-commit sehingga Streamlit Cloud tidak perlu menjalankan skrip pra-pemrosesan.
 
+## Deploy (Streamlit Community Cloud)
+
+1. Push repositori ini ke GitHub (publik).
+2. Di [share.streamlit.io](https://share.streamlit.io), pilih **Create app** → repositori ini, cabang
+   `main`, berkas utama `app.py`. Dependensi dibaca dari `requirements.txt`.
+3. Setelah aplikasi aktif, isi URL aplikasi dan repositori di bagian atas README ini.
+
 ## Pra-pemrosesan
 
 1. Tabel lebar BPS (17 kategori + PDRB × 5 periode) diubah ke format panjang. Tanda "-" dijadikan
    kosong, lalu hanya TW I dan TW II yang dipakai.
-2. Kode kategori dipisahkan dari namanya (`A`, `M,N`, `R,S,T,U`). Baris PDRB diberi kode `TOTAL`.
-   Versi sebelumnya salah membaca PDRB sebagai kode `P` (bertabrakan dengan Jasa Pendidikan) dan
-   `R,S,T,U` sebagai `R,S`.
+2. Kode kategori dipisahkan dari namanya (`A`, `M,N`, `R,S,T,U`). Baris PDRB diberi kode `TOTAL`
+   agar tidak tertukar dengan kategori P (Jasa Pendidikan).
 3. Data digabung dengan kode wilayah melalui nama kab/kota. Ke-514 nama cocok satu lawan satu.
 4. Pemeriksaan kualitas: tidak ada nilai kosong dan ada 112 sel bernilai nol. Selisih jumlah 17
    sektor dengan baris PDRB paling besar 0,02%, karena pembulatan.
@@ -101,19 +107,41 @@ streamlit run app.py
 - Pencilan ditentukan dengan Mahalanobis D² pada PC yang mencakup ≥ 80% varians, dengan ambang
   χ²(0,99).
 - Bobot spasial memakai 6 tetangga terdekat (haversine), distandardisasi baris, karena banyak
-  wilayah berupa pulau. LISA diuji dengan 999 permutasi bersyarat.
-- Pertumbuhan simpul hierarki dihitung ulang dari jumlah nilai (ΣTW II/ΣTW I − 1), bukan dari
-  rata-rata warna anak.
-- Halaman Cerita adalah scrollytelling empat babak (Pusat → Jurang → Arus balik → Belum berubah)
+  wilayah berupa pulau. LISA diuji dengan 999 permutasi bersyarat. Bila ada daerah yang dikeluarkan
+  (pertumbuhan dari basis nol), permutasi menarik sebanyak tetangga yang tersisa pada tiap daerah.
+- Pertumbuhan dihitung dari jumlah nilai (ΣTW II/ΣTW I − 1) untuk simpul hierarki, pulau, nasional,
+  dan "semua sektor" di peta. Totalnya selalu jumlah 17 sektor (bukan baris PDRB BPS), sama seperti
+  penyebut pangsa. Rumus lengkap ada di halaman Data & metode.
+- Treemap dan icicle menuliskan porsi dan pertumbuhan di setiap kotak, sehingga pertumbuhan tidak
+  hanya dibaca dari warna. Warna teks label dipilih hitam atau putih per kotak (kontras ≥ 4,5:1).
+- Setiap grafik punya judul yang menyebut isi dan satuannya, serta baris "Sumber: BPS" berisi judul
+  tabel, tautan, dan tanggal akses.
+- Halaman Cerita adalah scrollytelling empat babak (Konsentrasi PDRB → Pola Ekonomi → Pertumbuhan → Pergeseran)
   dengan grafik SVG buatan tangan (`src/story_svg.py`). Semua angka di teks berasal dari satu modul
   data (`src/story.py`); tidak ada angka yang diketik di templat. SVG dikirim lewat skrip karena
   sanitizer `st.html` membuang elemen `<svg>`.
-- Warna (tema gelap): slot kategorikal mode gelap untuk klaster (dengan bentuk penanda sebagai encoding kedua), jingga satu-hue
-  untuk besaran, dan biru↔jingga dengan titik tengah abu-abu untuk nilai di bawah/atas acuan.
-  Palet sudah diuji dengan simulasi CVD.
+- Tema terang & gelap: `.streamlit/config.toml` mendefinisikan `[theme.light]` dan `[theme.dark]`;
+  bawaannya mengikuti sistem dan bisa diganti lewat menu ⋮. Semua warna ada di `src/theme.py`.
+  Karena Streamlit tidak rerun saat tema diganti, `theme.sync()` memasang komponen kecil yang
+  membaca tema yang tampil, mengganti variabel CSS seketika, dan memicu satu rerun agar grafik
+  Plotly dan SVG digambar ulang.
+- Tombol **Aksesibilitas** di tepi kiri memuat ukuran teks, opsi hentikan animasi, dan pilihan palet.
+  Kedua palet ramah buta warna:
+
+  | | Kategorikal (klaster) | Sekuensial (besaran) | Divergen (LQ, pertumbuhan) | LISA |
+  |---|---|---|---|---|
+  | Viridis (bawaan) | palet rujukan tervalidasi (langkah terang/gelap) | Viridis | biru ↔ jingga | jingga / biru |
+  | Okabe-Ito / Cividis | Okabe-Ito (urutan hasil enumerasi) | Cividis | merah ↔ biru (RdBu) | merah / biru |
+
+  Klaster selalu memakai penanda kedua (bentuk, label, legenda bernama, small multiples).
 
 ## Keterbatasan
 
-Datanya baru dua triwulan, sehingga pertumbuhan q-to-q masih bercampur pola musiman. Harga konstan
-memakai tahun dasar 2010. Batas wilayah memakai kode 2019, sebelum pemekaran Papua. PC1–PC2 hanya
-menjelaskan ±39% varians.
+- Datanya baru dua triwulan, sehingga pertumbuhan q-to-q masih bercampur pola musiman.
+- Harga konstan memakai tahun dasar 2010. Batas wilayah memakai kode 2019, sebelum pemekaran Papua.
+- PC1–PC2 hanya menjelaskan ±39% varians.
+- LISA belum dikoreksi untuk uji berganda. Pada peta porsi pertanian, 167 dari 514 daerah signifikan
+  tanpa koreksi dan 42 dengan koreksi FDR (Benjamini–Hochberg); peta LISA dibaca sebagai petunjuk
+  letak kantong, bukan bukti per daerah.
+- Di ponsel, biplot 514 titik menjadi padat; menu "Sorot" disediakan sebagai pengganti laso.
+  Kotak treemap yang sangat kecil memakai teks yang diperkecil otomatis; rinciannya ada di tooltip.

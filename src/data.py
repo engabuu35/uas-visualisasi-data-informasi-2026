@@ -10,7 +10,8 @@ import streamlit as st
 
 import analysis as an
 import preprocess as pp
-from config import CLUSTER_COLORS, GEOJSON, N_CLUSTERS, PERMUTATIONS, PROCESSED_CSV, REGIONS_CSV, SPATIAL_K
+import theme
+from config import GEOJSON, N_CLUSTERS, PERMUTATIONS, PROCESSED_CSV, REGIONS_CSV, SPATIAL_K
 
 
 @st.cache_data(show_spinner=False)
@@ -55,7 +56,8 @@ def multivariate(period: str, k: int = N_CLUSTERS) -> an.MultivariateResult:
 
 
 def cluster_colors(mv: an.MultivariateResult) -> dict:
-    return an.cluster_colors(list(mv.cluster_profile.index), CLUSTER_COLORS)
+    """Warna per NAMA klaster dari palet aktif (tidak di-cache: ikut tema)."""
+    return an.cluster_colors(list(mv.cluster_profile.index), theme.tokens().cluster)
 
 
 @st.cache_resource(show_spinner=False)

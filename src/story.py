@@ -1,16 +1,12 @@
 """Lapisan data halaman Cerita: satu-satunya sumber angka yang tampil di sana.
 
-Templat teks dan grafik SVG hanya memformat nilai dari `figures()`; tidak ada
-angka yang diketik sebagai string. Kalau data BPS diperbarui, seluruh cerita
-ikut berubah, termasuk kalimat yang bergantung pada urutan (siapa tercepat,
-siapa paling lambat). Versi sebelumnya menulis "Jawa hanya +2,2%" seolah
-Jawa paling lambat, padahal Maluku-Papua lebih lambat; kalimat semacam itu
-sekarang dibentuk dari peringkat, bukan dari asumsi penulis.
+Teks dan grafik SVG hanya memformat nilai dari `figures()`; tidak ada angka yang
+diketik manual. Kalimat yang bergantung pada urutan (siapa tercepat, siapa paling
+lambat) dibentuk dari peringkat, sehingga ikut benar bila data diperbarui.
 """
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -95,6 +91,8 @@ def figures() -> dict:
     rest = [region_label(reg, k) for k in top if k not in dki_top]
     head = [f"{word(len(dki_top))} kota di Jakarta"] if len(dki_top) > 1 else [region_label(reg, k) for k in dki_top]
     f["top_text"] = join_id(head + rest)
+    f["top_dki_n"] = len(dki_top)
+    f["top_rest"] = [region_label(reg, k).replace("Kab. ", "Kabupaten ") for k in top if k not in dki_top]
 
     share2 = tot2.groupby(island).sum() / nat2 * 100
     share1 = tot1.groupby(island).sum() / nat1 * 100
@@ -106,16 +104,18 @@ def figures() -> dict:
 
     # --- Babak II: struktur (klaster) ----------------------------------------
     mv = data.multivariate(PERIOD)
-    colors = data.cluster_colors(mv)
+    # Urutan klaster mengikuti urutan warna tetap (theme), tetapi warnanya
+    # sendiri TIDAK disimpan di cache: ia bergantung pada tema dan palet aktif.
+    order = list(data.cluster_colors(mv))
     summary = pd.DataFrame({"klaster": mv.cluster, "pdrb": tot2, "pulau": island})
     rows = []
-    for name in colors:
+    for name in order:
         m = summary[summary["klaster"] == name]
         if m.empty:
             continue
         isl = m["pulau"].value_counts()
         rows.append({
-            "klaster": name, "color": colors[name], "n": int(len(m)),
+            "klaster": name, "n": int(len(m)),
             "pct_regions": len(m) / len(summary) * 100,
             "pct_pdrb": m["pdrb"].sum() / nat2 * 100,
             "top_island": isl.index[0], "top_island_n": int(isl.iloc[0]),
@@ -125,19 +125,17 @@ def figures() -> dict:
     f["cluster_of"] = mv.cluster.to_dict()
     f["n_clusters"] = int(len(clusters))
 
-    agr = _by_name(clusters, "Agraris")
+    agr = _by_name(clusters, "Basis Pertanian")
     f["agr"] = {"n": int(agr["n"]), "pct_regions": float(agr["pct_regions"]), "pct_pdrb": float(agr["pct_pdrb"])}
 
-    korp_name = "Pusat jasa korporat"
+    korp_name = "Basis Jasa Perusahaan"
     k = _by_name(clusters, korp_name)
     members = mv.cluster.index[mv.cluster == korp_name]
     in_dki = [c for c in members if reg.loc[c, "kode_prov"] == DKI]
     shares = data.shares(PERIOD)
     outside = [c for c in members if c not in in_dki]
-    # Anggota di luar 100 besar PDRB: masuk karena PORSI jasa perusahaannya,
-    # bukan karena ekonominya besar. Ini konsekuensi standardisasi z-score
-    # (sektor yang variasinya kecil antardaerah ikut diperbesar), jadi perlu
-    # dikatakan terang-terangan agar label klaster tidak menyesatkan.
+    # Anggota di luar 100 besar PDRB masuk karena PORSI jasa perusahaannya (efek z-score),
+    # bukan karena ekonominya besar; cerita menyebutkannya agar label tidak menyesatkan.
     rank = tot2.rank(ascending=False).astype(int)
     small = [c for c in outside if rank[c] > SMALL_RANK]
     f["korp"] = {
@@ -150,7 +148,7 @@ def figures() -> dict:
         "small_rank_cut": SMALL_RANK,
     }
 
-    gov_name = "Ditopang belanja pemerintah"
+    gov_name = "Basis Sektor Publik"
     g = _by_name(clusters, gov_name)
     gm = mv.cluster.index[mv.cluster == gov_name]
     non_papua = []
@@ -167,11 +165,11 @@ def figures() -> dict:
                 "top_sectors": [SECTOR_SHORT[c].lower() for c in mv.cluster_profile.loc[gov_name].nlargest(2).index],
                 "n_papua": int(reg.loc[gm, "kode_prov"].isin(PAPUA).sum()), "non_papua": non_papua}
 
-    # Sensitivitas jumlah klaster: apakah "Agraris" tetap sebesar ini?
+    # Sensitivitas jumlah klaster: apakah "Basis Pertanian" tetap sebesar ini?
     agr_by_k = {}
     for kk in (N_CLUSTERS - 1, N_CLUSTERS, N_CLUSTERS + 1):
         cl = data.multivariate(PERIOD, kk).cluster
-        agr_by_k[kk] = int((cl == "Agraris").sum())
+        agr_by_k[kk] = int((cl == "Basis Pertanian").sum())
     f["agr_by_k"] = agr_by_k
 
     # --- Babak III: pertumbuhan ----------------------------------------------

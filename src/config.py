@@ -28,10 +28,22 @@ BPS_SOURCE_URL = (
     "lapangan-usaha-di-kabupaten-kota-milyar-rupiah.html"
 )
 ACCESS_DATE = "27 September 2026"
+# Identitas pembuat untuk footer di setiap halaman (ui.footer).
+APP_TITLE = "514 Wajah Ekonomi"
+AUTHOR = "Arif Budiman"
+AUTHOR_ID = "222312994"
+AUTHOR_CLASS = "3SD2"
+AUTHOR_EMAIL = "222312994@stis.ac.id"
+COURSE = "UAS Visualisasi Data dan Informasi"
+INSTITUTION = "Politeknik Statistika STIS"
+MADE_DATE = "3 Oktober 2026"
+# Kutipan sumber tunggal; dipakai di bawah semua visualisasi (ui.source, cerita.source).
+SOURCE_CITE = ("Badan Pusat Statistik, PDRB Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut "
+               "17 Kategori Lapangan Usaha di Kabupaten/Kota 2026")
 
 # Batas wilayah adalah data pendukung non-BPS. Isi sesuai asal berkas
 # kabkota.geojson yang Anda pakai (penyedia, tahun batas, dan URL).
-GEO_SOURCE = "Batas administrasi kabupaten/kota (kode wilayah BPS 2019)"
+GEO_SOURCE = "Bahan praktikum Sistem Informasi Geografis, Dr. Rindang Bangun Prasetyo, Politeknik Statistika STIS"
 GEO_SOURCE_URL = ""
 
 SOURCE_NOTE = "Sumber: BPS, PDRB ADHK 2010 kab/kota, 2026 (diolah)"
@@ -117,67 +129,12 @@ ISLAND_ORDER = [
 ]
 
 # ---------------------------------------------------------------------------
-# Warna (tema gelap)
-# Latar gelap kebiruan, bukan hitam murni. Semua warna yang membawa data
-# diambil dari palet rujukan yang sudah divalidasi untuk permukaan gelap
-# (validate_palette.js, simulasi CVD Machado 2009). Hasil uji dicatat di
-# samping setiap palet agar tidak "dirapikan" tanpa diuji ulang.
-# ---------------------------------------------------------------------------
-INK = "#E8E4DE"          # teks utama, kontras 14,7:1 terhadap PAPER
-INK_SOFT = "#B5AEA6"     # teks sekunder, 8,5:1
-INK_MUTED = "#8A847D"    # sumbu, catatan, 5,0:1
-PAPER = "#0F1318"        # latar halaman
-SURFACE = "#141A21"      # latar grafik
-GRID = "#232A33"
-RULE = "#38404A"
-ACCENT = "#C98500"       # amber: identitas aplikasi
-ACCENT_DEEP = "#F4B175"  # penekanan; di latar gelap "lebih kuat" berarti lebih terang
-CONTEXT_GRAY = "#4A4F57"  # elemen yang tidak sedang disorot / tidak dapat dihitung
-LAND = "#20252A"          # daratan pada peta SVG cerita
-LAND_EDGE = "#2D3135"
-
-# Kategorikal 6 slot, urutan tetap dari palet rujukan (mode gelap).
-# Lolos semua uji pada pasangan bersebelahan (CVD terburuk dE 8,4).
-# Enam warna tidak bisa lolos uji semua-pasangan, jadi setiap tampilan klaster
-# wajib punya encoding kedua: bentuk penanda (biplot), label langsung
-# (dumbbell), atau small multiples satu warna per peta (cerita).
-CLUSTER_COLORS = ["#3987E5", "#D95926", "#199E70", "#C98500", "#D55181", "#008300"]
-CLUSTER_SYMBOLS = ["circle", "diamond", "square", "triangle-up", "cross", "x"]
-
-# Sekuensial satu hue (jingga), urutan nilai rendah -> tinggi. Di latar gelap
-# jangkarnya terbalik: nilai tinggi = lebih terang. Lolos uji ordinal
-# (monoton, dL >= 0,06, ujung tergelap 2,3:1 terhadap SURFACE).
-SEQ_ORANGE = ["#76491D", "#9B5E1E", "#C07525", "#E28E3A", "#F4B175", "#FED5B2"]
-
-# Divergen biru <-> jingga dengan titik tengah abu netral, untuk LQ dan
-# pertumbuhan. DIV_BLUE berurut ekstrem -> dekat tengah, DIV_ORANGE dekat
-# tengah -> ekstrem; kedua lengan setara lightness-nya (0,43 / 0,62 / 0,81).
-DIV_BLUE = ["#9EC5F4", "#3987E5", "#184F95"]
-DIV_MID = "#44454A"
-DIV_ORANGE = ["#834018", "#D36C1B", "#EFB787"]
-
-# LISA: lengan jingga (tinggi) dan biru (rendah); kelas "campuran" memakai
-# langkah pucat dari lengan yang sama. Uji semua-pasangan untuk empat kelas
-# bermakna: CVD terburuk dE 15,0, penglihatan normal 16,9. "Tidak signifikan"
-# sengaja resesif dan selalu dibantu legenda + tooltip.
-LISA_COLORS = {
-    "Tinggi-Tinggi": "#D36C1B",
-    "Rendah-Rendah": "#3987E5",
-    "Tinggi-Rendah": "#EFB787",
-    "Rendah-Tinggi": "#9EC5F4",
-    "Tidak signifikan": "#30353C",
-}
-
-# ---------------------------------------------------------------------------
-# Babak cerita. Aksen tiap babak membawa makna, bukan sekadar hiasan, dan
-# diambil dari slot kategorikal yang sama supaya tetap ramah buta warna
-# (merah-hijau pada arahan aslinya justru pasangan yang hilang pada
-# deuteranopia). "tint" adalah latar babak; gradien hero berakhir tepat di
-# tint babak I sehingga peralihan hero -> cerita tidak terlihat jahitannya.
+# Babak cerita. Warnanya (aksen + latar per mode) ada di theme.ACT_COLORS,
+# berurutan sama dengan daftar ini. Semua warna lain juga di src/theme.py.
 # ---------------------------------------------------------------------------
 ACTS = [
-    {"key": "pusat", "roman": "I", "label": "Pusat", "accent": "#C98500", "tint": "#181107"},
-    {"key": "jurang", "roman": "II", "label": "Jurang", "accent": "#D95926", "tint": "#1B0F0B"},
-    {"key": "arus", "roman": "III", "label": "Arus balik", "accent": "#199E70", "tint": "#091610"},
-    {"key": "kini", "roman": "IV", "label": "Belum berubah", "accent": "#3987E5", "tint": "#0C131C"},
+    {"key": "pusat", "roman": "I", "label": "Konsentrasi PDRB"},
+    {"key": "jurang", "roman": "II", "label": "Pola Ekonomi"},
+    {"key": "arus", "roman": "III", "label": "Pertumbuhan"},
+    {"key": "kini", "roman": "IV", "label": "Pergeseran"},
 ]

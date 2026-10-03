@@ -1,19 +1,32 @@
 [theme]
-# Gelap, bukan hitam murni: hitam murni mematikan kesan kedalaman di balik
-# peta dan kartu. Nilai-nilai ini sama dengan token di src/config.py.
-base = "dark"
-primaryColor = "#C98500"
-backgroundColor = "#0F1318"
-secondaryBackgroundColor = "#1A2029"
-textColor = "#E8E4DE"
-borderColor = "#2A313B"
+# Tema tidak dikunci: dengan [theme.light] dan [theme.dark] terdefinisi,
+# Streamlit mengikuti pengaturan sistem secara bawaan, dan pengguna bisa
+# memilih System / Light / Dark lewat menu kanan atas.
+# Nilai warna di bawah sama dengan CHROME di src/theme.py.
 font = "sans serif"
 headingFont = "sans serif"
 baseRadius = "small"
 showWidgetBorder = true
 
+[theme.light]
+primaryColor = "#BC3E0B"
+backgroundColor = "#FBF7F0"
+secondaryBackgroundColor = "#F3EDE2"
+textColor = "#1B1E22"
+borderColor = "#DAD6CE"
+
+[theme.dark]
+# Gelap kebiruan, bukan hitam murni.
+primaryColor = "#C98500"
+backgroundColor = "#0F1318"
+secondaryBackgroundColor = "#1A2029"
+textColor = "#E8E4DE"
+borderColor = "#2A313B"
+
 [server]
 headless = true
 
 [client]
-toolbarMode = "minimal"
+# "viewer" menampilkan menu dengan pilihan tema. "minimal" menyembunyikannya,
+# sehingga pengunjung tidak bisa berganti tema sama sekali.
+toolbarMode = "viewer"

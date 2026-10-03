@@ -10,18 +10,50 @@
   const svgs = window.__WS_SVG || {};
   root.querySelectorAll("[data-slot]").forEach((el) => { el.innerHTML = svgs[el.dataset.slot] || ""; });
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Tanpa gerak bila sistem operasi memintanya ATAU pengguna memilih "Hentikan animasi".
+  const reduce = window.__WS_STILL === true || matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Yang menggulir adalah wadah utama Streamlit, bukan window.
   const scroller = document.querySelector('[data-testid="stMain"]') || window;
   const acts = [...root.querySelectorAll(".ws-act")];
+  const scenes = [...root.querySelectorAll(".ws-cards")].map((w) => [...w.querySelectorAll(".ws-card")]);
+  // Kartu pertama dan terakhir tiap adegan sejajar tengah grafik (desktop). Ruang bawah
+  // membuat grafik tetap tersemat sampai kartu terakhir sampai di tengah, baru ikut terangkat.
+  const narrow = matchMedia("(max-width: 820px)");
+  const centerFirst = () => root.querySelectorAll(".ws-scene").forEach((sc) => {
+    const cards = sc.querySelector(".ws-cards"), stage = sc.querySelector(".ws-stage");
+    const all = cards ? cards.querySelectorAll(".ws-card") : [];
+    if (!all.length || !stage) return;
+    // Grafik tersemat di tengah layar; bila lebih tinggi dari layar, ia menempel di bawah header.
+    // data-nudge: geser grafik adegan tertentu sedikit ke bawah (px), tanpa melewati tepi bawah layar.
+    const h = stage.offsetHeight, base = Math.max(76, (innerHeight - h) / 2);
+    const top = Math.max(base, Math.min(base + (+sc.dataset.nudge || 0), innerHeight - h - 16));
+    stage.style.top = narrow.matches ? "" : `${top}px`;
+    // Ruang atas: kartu pertama sejajar tengah grafik. Ruang bawah: grafik tetap tersemat sampai kartu
+    // terakhir tepat di tengah layar (bawah adegan = bawah grafik tersemat), baru keduanya terangkat.
+    const first = all[0], last = all[all.length - 1];
+    cards.style.paddingTop = narrow.matches ? "" : `${Math.max(0, (h - first.offsetHeight) / 2)}px`;
+    cards.style.paddingBottom = narrow.matches ? ""
+      : `${Math.max(0, top + h - (innerHeight / 2 + last.offsetHeight / 2))}px`;
+  });
+  centerFirst();
+  // Tinggi grafik/kartu bisa berubah setelah dihitung (font, bungkus baris, SVG): hitung ulang saat itu.
+  if ("ResizeObserver" in window) {
+    const ro = new ResizeObserver(centerFirst);
+    root.querySelectorAll(".ws-stage, .ws-card").forEach((el) => ro.observe(el));
+  }
+  addEventListener("resize", centerFirst, { passive: true });
+  addEventListener("load", centerFirst);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(centerFirst);
   const rail = [...root.querySelectorAll(".ws-rail button")];
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  const tints = acts.map((a) => hex(a.dataset.tint));
+  // Tint dibaca dari variabel CSS babak (nilainya ikut tema aktif), bukan
+  // disalin sekali saat dimuat; kalau tidak, latar tertinggal setelah ganti tema.
+  let tints = [];
+  const readTints = () => { tints = acts.map((a) => hex(getComputedStyle(a).getPropertyValue("--tint").trim())); };
+  readTints();
 
   // ---- Latar mengikuti babak ------------------------------------------------
-  // Peralihan hanya di pita sekitar batas babak (±30% tinggi layar). Sebelum
-  // batas pertama warnanya tetap tint babak I, sehingga selama hero masih
-  // terlihat warna babak II tidak "bocor" lebih awal.
+  // Warna hanya beralih di sekitar batas babak (±30% tinggi layar).
   let ticking = false;
   function paint() {
     ticking = false;
@@ -34,19 +66,28 @@
       if (b < mid) active = i;
     }
     if (!reduce) root.style.setProperty("--ws-bg", `rgb(${c.join(",")})`);
+    // Kartu aktif per adegan = kartu yang pusatnya paling dekat ke tengah layar.
+    scenes.forEach((cards) => {
+      let best = null, bd = Infinity;
+      cards.forEach((c) => {
+        const r = c.getBoundingClientRect(), d = Math.abs(r.top + r.height / 2 - mid);
+        if (d < bd) { bd = d; best = c; }
+      });
+      cards.forEach((c) => c.classList.toggle("is-dim", c !== best));
+    });
     rail.forEach((btn, i) => (i === active ? btn.setAttribute("aria-current", "step") : btn.removeAttribute("aria-current")));
   }
   const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(paint); } };
   scroller.addEventListener("scroll", onScroll, { passive: true });
   addEventListener("resize", onScroll, { passive: true });
   paint();
+  new MutationObserver(() => { readTints(); paint(); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-st-theme"] });
 
   rail.forEach((btn, i) => btn.addEventListener("click", () =>
     acts[i].scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" })));
 
-  // ---- Masuk layar: animasi SEKALI ------------------------------------------
-  // Grafik yang beranimasi ulang setiap kali dilewati membuat data terasa
-  // tidak stabil, padahal datanya tetap.
+  // ---- Masuk layar: animasi sekali saja --------------------------------------
   const count = (el) => {
     const to = +el.dataset.to, t0 = performance.now(), dur = 900;
     const step = (now) => {

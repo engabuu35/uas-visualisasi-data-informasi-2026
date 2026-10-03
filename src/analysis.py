@@ -11,7 +11,7 @@ from scipy.stats import chi2
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from config import SECTOR_CODES, SECTOR_GROUP, SECTOR_SHORT
+from config import SECTOR_GROUP, SECTOR_SHORT
 
 # ---------------------------------------------------------------------------
 # Multivariat
@@ -21,22 +21,22 @@ from config import SECTOR_CODES, SECTOR_GROUP, SECTOR_SHORT
 # tertinggi) pada pusat klaster. Urutan daftar ini juga menentukan warna,
 # sehingga warna mengikuti "jenis ekonomi", bukan nomor klaster dari Ward.
 CLUSTER_NAMES = [
-    "Agraris",
-    "Basis industri",
-    "Kota jasa & perdagangan",
-    "Pusat jasa korporat",
-    "Bertumpu tambang",
-    "Ditopang belanja pemerintah",
+    "Basis Pertanian",
+    "Basis Industri",
+    "Basis Perdagangan & Jasa",
+    "Basis Jasa Perusahaan",
+    "Basis Pertambangan",
+    "Basis Sektor Publik",
 ]
 _NAME_RULES = {
-    "A": "Agraris",
-    "B": "Bertumpu tambang",
-    "C": "Basis industri",
-    "D": "Basis industri",
-    "E": "Basis industri",
-    "F": "Ditopang belanja pemerintah",
-    "O": "Ditopang belanja pemerintah",
-    "M,N": "Pusat jasa korporat",
+    "A": "Basis Pertanian",
+    "B": "Basis Pertambangan",
+    "C": "Basis Industri",
+    "D": "Basis Industri",
+    "E": "Basis Industri",
+    "F": "Basis Sektor Publik",
+    "O": "Basis Sektor Publik",
+    "M,N": "Basis Jasa Perusahaan",
 }
 
 
@@ -57,17 +57,10 @@ class MultivariateResult:
 
 
 def run_multivariate(shares: pd.DataFrame, k: int = 6, alpha: float = 0.01) -> MultivariateResult:
-    """PCA + Ward + Mahalanobis pada pangsa sektor yang distandardisasi.
+    """PCA, klaster Ward, dan pencilan Mahalanobis pada z-score pangsa sektor.
 
-    - Pangsa (%) dipakai agar posisi wilayah mencerminkan struktur ekonomi,
-      bukan ukuran. Standardisasi membuat sektor kecil (listrik, air) yang
-      variasinya besar tetap terbaca.
-    - Ward pada ruang z-score yang sama dengan PCA, sehingga klaster dan
-      heatmap terklaster konsisten satu sama lain.
-    - Pencilan: jarak Mahalanobis pada PC yang menjelaskan >= 80% varians,
-      dibandingkan dengan chi-kuadrat (df = jumlah PC, alpha 1%). Seluruh 17
-      PC tidak dipakai karena pangsa berjumlah 100 sehingga PC terakhir
-      bervarians ~0 dan membuat jarak meledak.
+    Pencilan diukur pada PC yang menjelaskan >= 80% varians (bukan 17 PC: pangsa
+    berjumlah 100, sehingga PC terakhir bervarians ~0), dengan ambang chi-kuadrat 1%.
     """
     z = pd.DataFrame(
         StandardScaler().fit_transform(shares), index=shares.index, columns=shares.columns,
@@ -79,9 +72,7 @@ def run_multivariate(shares: pd.DataFrame, k: int = 6, alpha: float = 0.01) -> M
     scores = pd.DataFrame(raw_scores, index=z.index, columns=pcs)
     loadings = pd.DataFrame(pca.components_.T, index=z.columns, columns=pcs)
 
-    # Arah PC tidak unik secara matematis; tetapkan agar PC1 positif = jasa
-    # perkotaan (K) dan PC2 positif = industri (C). Interpretasi jadi stabil
-    # antarperiode.
+    # Tanda PC tidak unik; tetapkan PC1+ = jasa keuangan (K), PC2+ = industri (C).
     for pc, anchor in (("PC1", "K"), ("PC2", "C")):
         if loadings.loc[anchor, pc] < 0:
             loadings[pc] *= -1
@@ -129,7 +120,7 @@ def _name_clusters(profile: pd.DataFrame) -> dict:
     # Klaster dengan ciri paling tajam diberi nama lebih dulu.
     for label in profile.max(axis=1).sort_values(ascending=False).index:
         ranked = profile.loc[label].sort_values(ascending=False)
-        name = _NAME_RULES.get(ranked.index[0], "Kota jasa & perdagangan")
+        name = _NAME_RULES.get(ranked.index[0], "Basis Perdagangan & Jasa")
         if name in used:
             name = f"{name} ({SECTOR_SHORT[ranked.index[1]].lower()})"
         used.add(name)
@@ -248,21 +239,23 @@ def moran(values: np.ndarray, w: np.ndarray, permutations: int = 999, seed: int 
     for p in range(permutations):
         zp = rng.permutation(z)
         sims[p] = zp @ (w @ zp) / n
-    # Uji pada ekor yang searah dengan I teramati. Versi lama selalu memakai
-    # ekor atas, sehingga pola berselang-seling (I negatif) tidak pernah bisa
-    # signifikan.
+    # Uji satu sisi, searah dengan I teramati (I negatif pun bisa signifikan).
     tail = sims >= i_global if i_global >= -1 / (len(z) - 1) else sims <= i_global
     p_global = (np.sum(tail) + 1) / (permutations + 1)
 
-    k = int(round(1 / w[w > 0].min()))  # bobot seragam 1/k
+    # Tarik k_i tetangga per wilayah (bisa < k bila ada wilayah yang dikeluarkan).
+    k_i = (w > 0).sum(axis=1)
     local = z * lag
-    draw = rng.integers(0, n - 1, size=(n, permutations, k))
+    draw = rng.integers(0, n - 1, size=(n, permutations, max(int(k_i.max()), 1)))
     draw += draw >= np.arange(n)[:, None, None]  # lewati diri sendiri
-    lag_sim = z[draw].mean(axis=2)
+    csum = np.cumsum(z[draw], axis=2)
+    pick = np.maximum(k_i, 1) - 1
+    lag_sim = np.take_along_axis(csum, pick[:, None, None], axis=2)[..., 0] / np.maximum(k_i, 1)[:, None]
     local_sim = z[:, None] * lag_sim
     larger = (local_sim >= local[:, None]).sum(axis=1)
     smaller = permutations - larger
     p_local = (np.minimum(larger, smaller) + 1) / (permutations + 1)
+    p_local[k_i == 0] = 1.0  # tanpa tetangga: tidak bisa diuji
 
     quad = np.select(
         [(z > 0) & (lag > 0), (z < 0) & (lag < 0), (z > 0) & (lag < 0), (z < 0) & (lag > 0)],
@@ -281,12 +274,8 @@ def moran(values: np.ndarray, w: np.ndarray, permutations: int = 999, seed: int 
 # ---------------------------------------------------------------------------
 
 def build_hierarchy(long: pd.DataFrame, period: str, order: str = "wilayah") -> pd.DataFrame:
-    """Simpul treemap/sunburst dengan nilai dan pertumbuhan yang dihitung ulang.
-
-    Ukuran  = PDRB ADHK pada `period` (miliar rupiah).
-    Warna   = pertumbuhan q-to-q TW II vs TW I (%), dihitung dari JUMLAH
-              nilai di bawah tiap simpul. Ini berbeda (dan lebih benar)
-              daripada rata-rata tertimbang yang dibuat Plotly otomatis.
+    """Simpul treemap/icicle. Ukuran = PDRB ADHK `period`; warna = pertumbuhan
+    TW II vs TW I dari JUMLAH nilai di bawah simpul (bukan rata-rata warna Plotly).
 
     order = "wilayah": Indonesia > Pulau > Provinsi > Kab/Kota > Sektor
     order = "sektor" : Indonesia > Kelompok > Sektor > Pulau > Provinsi
@@ -330,13 +319,3 @@ def build_hierarchy(long: pd.DataFrame, period: str, order: str = "wilayah") -> 
     out["pangsa_induk"] = out["nilai"] / out["parent"].map(out.set_index("id")["nilai"]) * 100
     return out[out["nilai"] > 0].reset_index(drop=True)
 
-
-def sector_table(values: pd.DataFrame) -> pd.DataFrame:
-    """Ringkasan nasional per sektor."""
-    tot = values.sum()
-    return pd.DataFrame({
-        "kode": SECTOR_CODES,
-        "sektor": [SECTOR_SHORT[c] for c in SECTOR_CODES],
-        "nilai": tot[SECTOR_CODES].to_numpy(),
-        "pangsa": (tot / tot.sum() * 100)[SECTOR_CODES].to_numpy(),
-    })
