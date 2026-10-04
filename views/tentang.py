@@ -116,11 +116,11 @@ dengan $i = 1, \dots, n$ ($n$ = __N__) dan $j = 1, \dots, 17$.
 
 | Indikator | Rumus | Keterangan | Dipakai di |
 |---|---|---|---|
-| Pangsa sektor | $s_{ij} = \dfrac{x_{ij}}{\sum_j x_{ij}} \times 100$ | Penyebutnya jumlah 17 lapangan usaha (bukan baris PDRB BPS), sehingga pangsa setiap daerah tepat berjumlah 100%. | Potret PDRB, PCA, klaster, peta |
-| Location quotient | $LQ_{ij} = \dfrac{x_{ij}/\sum_j x_{ij}}{\sum_i x_{ij}/\sum_{i,j} x_{ij}}$ | $LQ_{ij} > 1$: sektor $j$ lebih terkonsentrasi di daerah $i$ dibanding gabungan __N__ kabupaten/kota (indikasi sektor basis). | Potret PDRB, peta |
-| Pertumbuhan q-to-q | $g = \left(\dfrac{\sum x^{(\mathrm{TW\,II})}}{\sum x^{(\mathrm{TW\,I})}} - 1\right) \times 100$ | Penjumlahan atas semua sel (daerah × sektor) di bawah daerah, pulau, atau simpul hierarki; untuk satu sektor di satu daerah hanya satu sel. Tidak dihitung bila $\sum x^{(\mathrm{TW\,I})} = 0$. | Potret PDRB, peta, hierarki |
-| Jarak Mahalanobis | $D_i^2 = \sum_{k=1}^{m} \dfrac{t_{ik}^2}{\lambda_k}$ | $t_{ik}$: skor PC ke-$k$ daerah $i$ dari z-score pangsa; $\lambda_k$: varians PC ke-$k$; $m$: jumlah PC terkecil yang varians kumulatifnya ≥ 80% (saat ini $m$ = __M__). Pencilan bila $D_i^2 > \chi^2_{m;\,0{,}99}$. | pencilan |
-| Moran's I | $I = \dfrac{1}{n} \sum_i z_i \sum_j w_{ij} z_j$ | $z_i = (x_i - \bar{x})/\sigma$ dengan $\sigma$ simpangan baku populasi; $w_{ij} = 1/k_i$ untuk $k_i$ tetangga terdekat ($k$ = __K__), sehingga baris terstandardisasi dan $\sum_{i,j} w_{ij} = n$. Nilai harapan bila acak $E[I] = -1/(n-1)$. Signifikansi global dan lokal (LISA) dari __P__ permutasi. | Potret PDRB, peta LISA |
+| Pangsa sektor | $s_{ij}=\frac{x_{ij}}{\sum_j x_{ij}}\times100$ | Penyebut merupakan jumlah 17 lapangan usaha, bukan baris total PDRB BPS. Dengan demikian, pangsa setiap daerah berjumlah 100%. | Potret PDRB, PCA, klaster, peta |
+| Location Quotient | $LQ_{ij}=\frac{x_{ij}/\sum_jx_{ij}}{\sum_i x_{ij}/\sum_{i,j}x_{ij}}$ | $LQ_{ij}>1$: proporsi sektor $j$ di daerah $i$ lebih besar daripada proporsi sektor tersebut pada total __N__ kabupaten/kota, sehingga menunjukkan indikasi sektor basis. | Potret PDRB, peta |
+| Pertumbuhan q-to-q | $g=\left(\frac{\sum x^{(TWII)}}{\sum x^{(TWI)}}-1\right)\times100$ | Penjumlahan atas seluruh sel daerah × sektor pada daerah, pulau, atau simpul hierarki. Tidak dihitung jika nilai Triwulan I = 0. | Potret PDRB, peta, hierarki |
+| Jarak Mahalanobis | $D_i^2=\sum_{k=1}^{m}\frac{t_{ik}^2}{\lambda_k}$ | $t_{ik}$: skor PC ke-$k$ daerah $i$ dari z-score pangsa; $\lambda_k$: varians PC ke-$k$; $m$: jumlah PC terkecil dengan varians kumulatif ≥80% (saat ini $m=__M__$). Pencilan ditandai jika $D_i^2>\chi^2_{m,0.99}$. | Pencilan |
+| Moran's I | $I=\frac{1}{n}\sum_i z_i\sum_jw_{ij}z_j$ | $x_i$ adalah nilai indikator spasial pada daerah $i$, dan $z_i=(x_i-\bar{x})/\sigma$, dengan $\sigma$ simpangan baku populasi. $w_{ij}=1/k_i$ untuk $k_i$ tetangga terdekat; pada data lengkap $k_i=__K__$, sehingga bobot terstandardisasi per baris. $E[I]=-1/(n-1)$. Signifikansi global dan lokal (LISA) dievaluasi melalui __P__ permutasi. | Potret PDRB, peta LISA |
 """.replace("__N__", str(n_reg)).replace("__M__", str(data.multivariate("Triwulan II").n_pc_outlier))
     .replace("__K__", str(SPATIAL_K)).replace("__P__", str(PERMUTATIONS))
 )
