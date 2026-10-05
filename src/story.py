@@ -1,9 +1,4 @@
-"""Lapisan data halaman Cerita: satu-satunya sumber angka yang tampil di sana.
-
-Teks dan grafik SVG hanya memformat nilai dari `figures()`; tidak ada angka yang
-diketik manual. Kalimat yang bergantung pada urutan (siapa tercepat, siapa paling
-lambat) dibentuk dari peringkat, sehingga ikut benar bila data diperbarui.
-"""
+"""Lapisan data halaman Cerita: semua angka di sana berasal dari `figures()`, tidak diketik manual."""
 
 from __future__ import annotations
 
@@ -34,8 +29,7 @@ def word(n: int) -> str:
 
 
 def region_label(reg: pd.DataFrame, kode: str) -> str:
-    """Nama tampilan. Tabel BPS menulis kabupaten tanpa awalan, sehingga
-    'Bekasi' dan 'Bogor' mudah tertukar dengan kotanya; awalan 'Kab.' mencegahnya."""
+    """Nama tampilan; awalan 'Kab.' mencegah kabupaten tertukar dengan kota bernama sama."""
     r = reg.loc[kode]
     return r["kabkota"] if r["jenis"] == "Kota" else f"Kab. {r['kabkota']}"
 
@@ -76,7 +70,7 @@ def figures() -> dict:
         "period": PERIOD, "prev": PREV,
     }
 
-    # --- Babak I: konsentrasi -------------------------------------------------
+    # --- Babak I: konsentrasi ---
     conc = pp.concentration(tot2)
     f["conc_y"] = conc["kumulatif_pct"].round(3).tolist()
     f["conc_names"] = [region_label(reg, k) for k in conc["kode"]]
@@ -102,10 +96,9 @@ def figures() -> dict:
     dki = reg.index[reg["kode_prov"] == DKI]
     f["dki_n"], f["dki_share"] = int(len(dki)), float(tot2[dki].sum() / nat2 * 100)
 
-    # --- Babak II: struktur (klaster) ----------------------------------------
+    # --- Babak II: struktur (klaster) ---
     mv = data.multivariate(PERIOD)
-    # Urutan klaster mengikuti urutan warna tetap (theme), tetapi warnanya
-    # sendiri TIDAK disimpan di cache: ia bergantung pada tema dan palet aktif.
+    # Urutan klaster mengikuti warna tetap; warnanya tidak di-cache karena bergantung pada tema.
     order = list(data.cluster_colors(mv))
     summary = pd.DataFrame({"klaster": mv.cluster, "pdrb": tot2, "pulau": island})
     rows = []
@@ -134,8 +127,7 @@ def figures() -> dict:
     in_dki = [c for c in members if reg.loc[c, "kode_prov"] == DKI]
     shares = data.shares(PERIOD)
     outside = [c for c in members if c not in in_dki]
-    # Anggota di luar 100 besar PDRB masuk karena PORSI jasa perusahaannya (efek z-score),
-    # bukan karena ekonominya besar; cerita menyebutkannya agar label tidak menyesatkan.
+    # Anggota di luar 100 besar masuk karena porsi jasa perusahaannya (efek z-score), bukan ukurannya.
     rank = tot2.rank(ascending=False).astype(int)
     small = [c for c in outside if rank[c] > SMALL_RANK]
     f["korp"] = {
@@ -172,7 +164,7 @@ def figures() -> dict:
         agr_by_k[kk] = int((cl == "Basis Pertanian").sum())
     f["agr_by_k"] = agr_by_k
 
-    # --- Babak III: pertumbuhan ----------------------------------------------
+    # --- Babak III: pertumbuhan ---
     s1, s2 = tot1.groupby(island).sum(), tot2.groupby(island).sum()
     ig = ((s2 / s1 - 1) * 100).sort_values(ascending=False)
     f["island_growth"] = [{"label": k, "value": float(v)} for k, v in ig.items()]
@@ -184,7 +176,7 @@ def figures() -> dict:
     f["largest_sectors"] = [SECTOR_SHORT[c].lower() for c in size.nlargest(2).index]
     f["fast_sectors_are_small"] = not set(sg.index[:3]) & set(size.nlargest(2).index)
 
-    # --- Babak IV: pola yang mengakar ----------------------------------------
+    # --- Babak IV: pola yang mengakar ---
     mo = data.moran("Pangsa sektor", "A", PERIOD)
     quad = pd.Series(mo["quadrant"], index=mo["kode"])
     prov = reg.loc[quad.index, "provinsi"]
@@ -203,7 +195,7 @@ def figures() -> dict:
     f["moran_by_k"] = {kk: float(an.moran(x, an.knn_weights(lat, lon, kk), permutations=99)["I"])
                        for kk in (4, 5, 6, 7, 8)}
 
-    # --- Hero ---------------------------------------------------------------
+    # --- Hero ---
     f["names"] = {c: region_label(reg, c) for c in tot2.index}
     f["provinces"] = reg.loc[tot2.index, "provinsi"].to_dict()
     f["pdrb"] = tot2.to_dict()

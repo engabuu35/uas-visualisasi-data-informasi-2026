@@ -1,14 +1,5 @@
-"""Satu-satunya tempat warna didefinisikan: tema terang/gelap x palet standar/alternatif.
-
-Kode lain tidak boleh menulis kode warna sendiri; ambil dari `tokens()`.
-
-Streamlit tidak rerun saat tema diganti lewat menu. `sync()` membaca latar yang
-sedang tampil, menulis `data-st-theme` di <html> (CSS berganti seketika), lalu memicu
-satu rerun agar grafik Plotly dan SVG digambar ulang.
-
-Palet kategorikal dan LISA diuji dengan simulasi buta warna Machado-Oliveira-Fernandes
-(2009), dE OKLab x100 >= 8. Urutan slot bagian dari keamanannya; uji ulang bila diubah.
-"""
+"""Satu-satunya tempat warna didefinisikan (terang/gelap x palet); kode lain memakai `tokens()`.
+Palet kategorikal dan LISA lolos simulasi buta warna (dE OKLab x100 >= 8); uji ulang bila diubah."""
 
 from __future__ import annotations
 
@@ -22,9 +13,7 @@ MODES = ("light", "dark")
 STANDARD, ALTERNATIVE = "Viridis (bawaan)", "Okabe-Ito / Cividis"
 VARIANTS = (STANDARD, ALTERNATIVE)
 
-# ---------------------------------------------------------------------------
-# Kerangka (teks, latar, garis). Kontras teks diukur terhadap `paper`.
-# ---------------------------------------------------------------------------
+# --- Kerangka (teks, latar, garis). Kontras teks diukur terhadap `paper`. ---
 CHROME = {
     "light": dict(
         paper="#FBF7F0", surface="#FFFFFF", panel="#F3EDE2",
@@ -62,12 +51,9 @@ CHROME = {
     ),
 }
 
-# ---------------------------------------------------------------------------
-# Kategorikal (klaster). Warna mengikuti NAMA klaster, bukan peringkatnya.
-# ---------------------------------------------------------------------------
+# --- Kategorikal (klaster). Warna mengikuti NAMA klaster, bukan peringkatnya. ---
 CATEGORICAL = {
-    # Palet rujukan tervalidasi, langkah terang & gelap dari rona yang sama.
-    # Pasangan bersebelahan: CVD terburuk dE 9,1 (terang) / 8,4 (gelap).
+    # Palet rujukan tervalidasi; CVD terburuk pasangan bersebelahan dE 9,1 (terang) / 8,4 (gelap).
     STANDARD: {
         "light": ["#2A78D6", "#EB6834", "#1BAF7A", "#EDA100", "#E87BA4", "#008300"],
         "dark": ["#3987E5", "#D95926", "#199E70", "#C98500", "#D55181", "#008300"],
@@ -81,20 +67,14 @@ CATEGORICAL = {
 # Enam warna tidak semua pasangannya aman, jadi klaster selalu punya encoding kedua.
 SYMBOLS = ["circle", "diamond", "square", "triangle-up", "cross", "x"]
 
-# ---------------------------------------------------------------------------
-# Sekuensial: Viridis / Cividis. Nilai tinggi selalu paling kontras dengan latar;
-# ujung ekstrem dipangkas agar kelas terendah tidak lebur dengan latar.
-# ---------------------------------------------------------------------------
+# --- Sekuensial: Viridis / Cividis, ujung dipangkas agar kelas terendah tidak lebur dengan latar ---
 _SEQ_SOURCE = {STANDARD: sequential.Viridis, ALTERNATIVE: sequential.Cividis}
 _SEQ_RANGE = {"light": (0.92, 0.0), "dark": (0.12, 1.0)}
 
 # Teks label treemap/icicle: hitam atau putih per kotak (menjamin >= 4,58:1).
 LABEL_INK = ("#000000", "#FFFFFF")
 
-# ---------------------------------------------------------------------------
-# Divergen (LQ, pertumbuhan). neg = [ekstrem, tengah, dekat-tengah],
-# pos = [dekat-tengah, tengah, ekstrem]. Tidak pernah merah-hijau.
-# ---------------------------------------------------------------------------
+# --- Divergen (LQ, pertumbuhan): neg = [ekstrem .. dekat-tengah], pos = [dekat-tengah .. ekstrem] ---
 DIVERGING = {
     STANDARD: {  # biru <-> jingga
         "light": dict(neg=["#1C5CAB", "#5598E7", "#B7D3F6"], mid="#EFEDE8", pos=["#F7C8A4", "#E8803F", "#A94E12"]),
@@ -106,9 +86,7 @@ DIVERGING = {
     },
 }
 
-# ---------------------------------------------------------------------------
-# LISA. dE terburuk (CVD) empat kelas bermakna: standar 20,1 / 15,0; alternatif 15,1 / 12,6.
-# ---------------------------------------------------------------------------
+# --- LISA. dE terburuk (CVD) empat kelas bermakna: standar 20,1 / 15,0; alternatif 15,1 / 12,6. ---
 _LISA_KEYS = ["Tinggi-Tinggi", "Rendah-Rendah", "Tinggi-Rendah", "Rendah-Tinggi", "Tidak signifikan"]
 LISA = {
     STANDARD: {
@@ -121,9 +99,7 @@ LISA = {
     },
 }
 
-# ---------------------------------------------------------------------------
-# Aksen babak cerita (tidak ikut varian palet). Kontras >= 4,6:1 (terang) / 4,8:1 (gelap).
-# ---------------------------------------------------------------------------
+# --- Aksen babak cerita (tidak ikut varian palet). Kontras >= 4,6:1 (terang) / 4,8:1 (gelap). ---
 ACT_COLORS = {
     "light": [("#8E5C09", "#FCE9D3"), ("#A84D27", "#FFE6DD"), ("#06775A", "#D9F2E8"), ("#3069B0", "#E3EDFF")],
     "dark": [("#C98500", "#15120D"), ("#D95926", "#17110F"), ("#199E70", "#0E1411"), ("#3987E5", "#0F1317")],
@@ -143,9 +119,7 @@ PAGE_BG = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Status aktif
-# ---------------------------------------------------------------------------
+# --- Status aktif ---
 
 def mode() -> str:
     m = st.session_state.get("_theme_mode")
@@ -189,9 +163,8 @@ def _rgb_to_hex(c: str) -> str:
 
 
 def css_vars() -> str:
-    """Token kerangka sebagai variabel CSS untuk kedua mode. Mode yang sedang
-    diketahui Python menjadi bawaan; atribut data-st-theme (diisi sync())
-    menimpanya seketika saat pengguna berganti tema."""
+    """Token kerangka sebagai variabel CSS untuk kedua mode; data-st-theme (diisi sync())
+    menimpa bawaan seketika saat tema berganti."""
     def block(m):
         c = CHROME[m]
         acts = ACT_COLORS[m]
@@ -215,14 +188,11 @@ def css_vars() -> str:
             f':root[data-st-theme="dark"]{{{block("dark")}}}')
 
 
-# ---------------------------------------------------------------------------
-# Sinkronisasi tema (lihat docstring modul)
-# ---------------------------------------------------------------------------
+# --- Sinkronisasi tema: Streamlit tidak rerun saat tema diganti, jadi latar dibaca dari DOM ---
 _PROBE_JS = """
 export default function (component) {
   const { setStateValue, data } = component;
-  // Streamlit memasang lang="en"; isi aplikasi berbahasa Indonesia, jadi pembaca layar
-  // perlu tahu bahasanya agar pelafalannya benar (WCAG 3.1.1).
+  // Isi berbahasa Indonesia; pembaca layar perlu lang="id" (WCAG 3.1.1).
   document.documentElement.lang = 'id';
   const read = () => {
     const app = document.querySelector('.stApp');
@@ -232,9 +202,7 @@ export default function (component) {
     const [r, g, b] = m.map(Number);
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 128 ? 'dark' : 'light';
   };
-  // Satu nilai "terakhir dikirim" untuk seluruh halaman. Komponen dipasang
-  // ulang di setiap rerun; pembanding per-pemasangan memicu 4-5 rerun
-  // berantai untuk satu kali ganti tema.
+  // Satu nilai "terakhir dikirim" per halaman; pembanding per-pemasangan memicu rerun berantai.
   if (window.__stThemeSent === undefined) window.__stThemeSent = data;
   const tick = () => {
     const t = read();
@@ -251,8 +219,7 @@ _probe = st.components.v2.component("theme_probe", js=_PROBE_JS)
 
 
 def sync() -> str:
-    """Pasang pembaca tema. Dipanggil di dalam panel Aksesibilitas yang posisinya tetap (fixed),
-    jadi tidak memakan ruang halaman."""
+    """Pasang pembaca tema (di panel Aksesibilitas yang fixed, jadi tidak memakan ruang)."""
     guess = mode()
     res = _probe(key="theme_probe", data=guess, default={"mode": None}, on_mode_change=lambda: None)
     m = res.mode if res.mode in MODES else guess

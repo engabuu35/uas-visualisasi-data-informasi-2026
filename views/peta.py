@@ -29,7 +29,7 @@ lede(
     "lingkaran dan dapat disembunyikan untuk melihat pola spesialisasi dengan lebih jelas."
 )
 
-# --- kontrol ----------------------------------------------------------------
+# --- kontrol ---
 r1 = st.columns([2.1, 1.3, 1])
 indicator = r1[0].segmented_control("Indikator", list(data.INDICATORS), default="Location quotient",
                                     key="map_ind") or "Location quotient"
@@ -57,7 +57,7 @@ province = r2[1].selectbox("Perbesar ke provinsi", ["Seluruh Indonesia"] + sorte
 layers = r2[2].pills("Lapisan", ["Choropleth", "Lingkaran PDRB"], default=["Choropleth", "Lingkaran PDRB"],
                      selection_mode="multi", key="map_layers")
 
-# --- nilai dan kelas ----------------------------------------------------------
+# --- nilai dan kelas ---
 vals = data.indicator_values(indicator, sector, period)
 df = reg.loc[vals.index, ["kabkota", "provinsi", "lat", "lon"]].copy()
 df["kode"] = df.index
@@ -169,7 +169,7 @@ why = {
 }[method]
 source(f"{indicator} {sector_lc}, {when}. {why} Batas wilayah: {GEO_SOURCE}")
 
-# --- ringkasan + tampilan tabel ---------------------------------------------
+# --- ringkasan + tampilan tabel ---
 in_view = df.loc[view.index].dropna(subset=["nilai"])
 top = in_view.nlargest(5, "nilai")
 a, b = st.columns([1, 1.2], gap="large")
@@ -190,7 +190,7 @@ with b:
             hide_index=True, height=320,
         )
 
-# --- LISA -------------------------------------------------------------------
+# --- LISA ---
 st.header("Apakah pola ini mengelompok?")
 mo = data.moran(indicator, sector, period)
 # Kalimat disusun dari indikator, sektor, dan hasil uji, sehingga ikut berubah saat kontrol diganti.

@@ -13,39 +13,29 @@ from config import (
     INSTITUTION, MADE_DATE, SOURCE_CITE,
 )
 
-# Warna lewat variabel --tk-* (theme.css_vars) sehingga ikut berganti seketika
-# saat tema diganti; tidak ada kode warna di sini.
+# Warna lewat variabel --tk-* (theme.css_vars) agar ikut berganti seketika saat tema diganti.
 CSS = """
-/* Navigasi atas rata tengah dan sedikit lebih besar (14 -> 16 px) agar menyatu
-   dengan tipografi halaman cerita. Selektor memakai data-testid dan kelas
-   rc-overflow (pustaka), bukan kelas emotion yang namanya berubah tiap versi. */
-/* Area kanan (menu) punya lebar minimum tetap 12,5 rem sedangkan kiri (tombol
-   sidebar) hanya selebar tombol, jadi flex biasa tidak bisa menengahkan. rc-overflow
-   (anak langsung toolbar) dibuat absolut dengan jarak kiri = kanan sehingga item
-   di dalamnya pas di tengah halaman. Lebar dibiarkan tetap agar deteksi muat/tidak
-   muat (menu "...") di pustaka rc-overflow tetap bekerja. */
+/* Navigasi atas rata tengah: rc-overflow dibuat absolut dengan jarak kiri = kanan,
+   karena lebar area kiri dan kanan toolbar tidak sama. */
 [data-testid="stToolbar"] { position: relative; }
 [data-testid="stToolbar"] .rc-overflow {
   position: absolute; top: 0; bottom: 0; left: 14rem; right: 14rem; width: auto !important; max-width: none !important;
   display: flex; align-items: center; justify-content: center; min-width: 0; z-index: 1;
 }
 @media (max-width: 1100px) {
-  /* Layar sempit: kurangi jarak simetris (14 -> 8 rem) agar kelima item tidak runtuh ke menu "...". */
+  /* Layar sempit: jarak dikurangi agar item tidak runtuh ke menu "...". */
   [data-testid="stToolbar"] .rc-overflow { left: 8rem; right: 8rem; }
 }
 [data-testid="stTopNavLink"], [data-testid="stTopNavLink"] * { font-size: .95rem !important; font-family: var(--font-head) !important; }
 [data-testid="stTopNavLink"] { padding: .4rem .85rem !important; }
-/* Tombol segmented/pills setinggi kotak dropdown (2,5 rem) supaya satu baris kontrol terlihat simetris. */
+/* Tombol segmented/pills setinggi kotak dropdown agar satu baris kontrol simetris. */
 [data-testid="stMain"] [data-testid="stButtonGroup"] button { min-height: 2.5rem; padding-top: 0; padding-bottom: 0; }
-/* Segmen/pill terpilih: isi persik yang sama di semua halaman (bawaan Streamlit hanya 10% oranye di atas
-   latar halaman, sehingga di halaman berlatar hijau atau merah muda warnanya ikut berubah). */
+/* Segmen/pill terpilih: isi persik yang sama di semua halaman, tidak ikut warna latar. */
 [data-testid="stMain"] [data-testid="stButtonGroup"] button[aria-checked="true"] {
   background-color: var(--tk-seg-active) !important; border-color: var(--tk-accent) !important; color: var(--tk-accent) !important; }
-/* Parallel coordinates digambar di kanvas WebGL; pada sebagian kartu grafis garisnya hilang bertahap saat halaman
-   digulir. Lapisan komposit sendiri + isolasi gambar mengurangi masalah itu (kanvas juga dibuat tanpa skala 2x). */
+/* Parallel coordinates (WebGL): lapisan komposit sendiri agar garis tidak hilang saat halaman digulir. */
 [class*="st-key-pc_chart_"] { transform: translateZ(0); will-change: transform; contain: paint; }
-/* Kartu unduhan data (Data & metode): gaya kartu halaman Cerita, yaitu latar krem, pita judul berikon, dan
-   aksen hijau (warna babak III), dengan tombol unduh hijau. */
+/* Kartu unduhan data (Data & metode): gaya kartu Cerita dengan aksen hijau babak III. */
 .st-key-dl-cards [data-testid="stHorizontalBlock"] { align-items: stretch; gap: 1.2rem; }
 .st-key-dl-cards [data-testid="stColumn"] { background-color: var(--tk-paper); border: 1px solid var(--tk-hairline);
   border-radius: 1rem; padding: 1.15rem 1.35rem 1.25rem; box-shadow: 0 6px 18px -10px color-mix(in srgb, var(--tk-act3) 45%, transparent); }
@@ -67,7 +57,7 @@ CSS = """
   background-color: color-mix(in srgb, var(--tk-act3) 14%, var(--tk-paper)); border-color: var(--tk-act3); }
 .st-key-dl-cards [data-testid="stDownloadButton"] button:hover { filter: brightness(.96); }
 .st-key-moran_text p { text-align: justify; text-justify: inter-word; }
-/* Tombol reset brushing: kecil dan rata kanan, bukan selebar kolom; berwarna sama dengan segmen terpilih. */
+/* Tombol reset brushing: kecil, rata kanan, berwarna sama dengan segmen terpilih. */
 .st-key-pc_reset_btn { display: flex; justify-content: flex-end; width: 100% !important; }
 .st-key-pc_reset_btn button { min-height: 2rem; padding: .15rem .85rem; font-size: .85rem; border-radius: .6rem;
   background-color: var(--tk-seg-active); border-color: var(--tk-accent); color: var(--tk-accent); }
@@ -82,10 +72,8 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .prose { max-width: 44rem; }
 .src { font-size: .58rem; color: var(--tk-muted); margin: -.4rem 0 1.2rem; text-align: center; }
 .src a { color: var(--tk-muted); }
-/* Judul grafik: satu gaya untuk semua halaman (sama dengan .ws-chart-t di Cerita). Rata tengah,
-   satu baris, ukuran sama untuk semua judul pada lebar layar yang sama (1rem di laptop, sedikit
-   lebih kecil di ponsel). Teks judul dibuat cukup pendek agar muat di kolom tersempit; elipsis
-   hanya pengaman, dan teks lengkapnya tetap ada di atribut title. */
+/* Judul grafik: satu gaya untuk semua halaman (sama dengan .ws-chart-t), rata tengah, satu baris;
+   elipsis hanya pengaman, teks lengkap ada di atribut title. */
 .chart-t { font-family: var(--font-head); font-weight: 600; font-size: clamp(.85rem, .75rem + .5vw, 1rem) !important;
   line-height: 1.35; color: var(--tk-ink); margin: .6rem 0 .3rem; text-align: center;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -102,7 +90,7 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .swatches i { width: 14px; height: 14px; border-radius: 3px; display: inline-block; box-shadow: inset 0 0 0 1px var(--tk-hairline); }
 .swatches.center { justify-content: center; text-align: center; }
 .swatches.center b { flex-basis: 100%; margin: 0; }
-/* Legenda LISA (rata tengah) dibuat lebih kecil: teks, kotak warna, dan jarak. */
+/* Legenda LISA (rata tengah) lebih kecil. */
 .swatches.center { font-size: .74rem; gap: .25rem .9rem; }
 .swatches.center span { gap: .3rem; }
 .swatches.center i { width: 11px; height: 11px; border-radius: 2px; }
@@ -112,18 +100,13 @@ p, li { font-size: 1.04rem; line-height: 1.62; }
 .legend-dots b { font-weight: 600; margin-right: .3rem; }
 .legend-dots span { display: inline-flex; align-items: center; gap: .4rem; font-size: .86rem; color: var(--tk-soft); }
 .legend-dots i { display: inline-block; border-radius: 50%; background: var(--tk-ink); opacity: .45; }
-/* Kicker halaman Jelajah: gaya sama dengan kicker babak cerita, warnanya aksen halaman (--pg-accent
-   dipasang di app.py menurut urutan babak). */
-/* Dicampur 25% dengan warna tinta agar teks kecil ini >= 4,5:1 di kedua tema (aksen murni gagal
-   di latar halaman Peta tema gelap). */
+/* Kicker halaman Jelajah: aksen halaman (--pg-accent dari app.py) dicampur 25% tinta agar >= 4,5:1. */
 .pg-kicker { color: var(--pg-accent, var(--tk-accent));
   color: color-mix(in srgb, var(--pg-accent, var(--tk-accent)) 75%, var(--tk-ink)); text-transform: uppercase; letter-spacing: .3em;
   font-size: .72rem; font-weight: 600; margin: 0 0 -.6rem !important; }
-/* Teks pilihan aktif pada segmented control/pills: warna aksen bawaan Streamlit hanya 4,0:1 (terang)
-   dan 3,7:1 (gelap) di atas latar oranye pucatnya. accent_deep memberi 6,1:1 dan 6,2:1 (WCAG 1.4.3). */
+/* Teks pilihan aktif segmented/pills: accent_deep agar kontras >= 6:1 (WCAG 1.4.3). */
 button[data-selected="true"], button[data-selected="true"] * { color: var(--tk-accent-deep) !important; }
-/* Penanda fokus keyboard yang tegas untuk tautan (navigasi atas, kartu Jelajah, sumber). Bawaan
-   Streamlit hanya latar tipis yang mirip efek hover. Hanya untuk :focus-visible, tidak saat diklik. */
+/* Penanda fokus keyboard yang tegas untuk tautan (hanya :focus-visible). */
 a:focus-visible, [data-testid="stTopNavLink"]:focus-visible, [data-testid="stPageLink-NavLink"]:focus-visible {
   outline: 2px solid var(--tk-accent-deep) !important; outline-offset: 2px; border-radius: .4rem; }
 /* Grup tombol boleh turun baris bila kolomnya sempit, alih-alih memotong pilihan terakhir. */
@@ -149,12 +132,8 @@ FONT_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 
 @lru_cache(maxsize=1)
 def _font_css() -> str:
-    """Poppins untuk judul dan angka besar, disematkan sebagai data URI.
-
-    Dibundel lokal (bukan Google Fonts) agar tampilan tidak berubah saat tidak ada
-    internet. Isi teks, kartu, dan label grafik tetap Source Sans 3: lebar hurufnya
-    sudah menjadi dasar kalibrasi tata letak (kolom kartu, label sumbu SVG, navigasi).
-    """
+    """Poppins untuk judul dan angka besar, disematkan lokal sebagai data URI.
+    Isi teks dan label grafik tetap Source Sans 3 (dasar kalibrasi tata letak)."""
     faces = []
     for weight in (500, 600, 700):
         f = FONT_DIR / f"poppins-latin-{weight}.woff2"
@@ -168,8 +147,7 @@ def _font_css() -> str:
 # Ukuran teks (panel Aksesibilitas): mengubah font-size <html>, sehingga semua satuan rem ikut.
 TEXT_SIZES = ["100%", "115%", "130%"]
 
-# Tombol Aksesibilitas di tepi kiri. Labelnya tersembunyi secara visual tetapi tetap dibaca
-# pembaca layar; ikonnya mask CSS (SVG ter-enkode URL agar lolos sanitizer st.html).
+# Tombol Aksesibilitas: label tersembunyi visual tapi dibaca pembaca layar; ikon berupa mask CSS.
 _A11Y_ICON = ("url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E"
               "%3Cpath d='M20.5 6c-2.61.7-5.67 1-8.5 1s-5.89-.3-8.5-1L3 8c1.86.5 4 .83 6 1v13h2v-6h2v6h2V9"
               "c2-.17 4.14-.5 6-1l-.5-2zM12 6c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z'/%3E%3C/svg%3E\")")
@@ -180,8 +158,7 @@ A11Y_CSS = """
   border-radius: 50%; border: none; justify-content: center; background: var(--tk-accent);
   color: var(--tk-on-accent); box-shadow: 0 6px 18px rgba(0,0,0,.18); }
 .st-key-a11y [data-testid="stPopoverButton"] { position: relative; }
-/* Ikon diposisikan absolut di tengah: elemen anak Streamlit (kosong) dan gap bawaan tombol
-   menggeser ikon bila ikut tata letak flex. */
+/* Ikon absolut di tengah agar tidak tergeser elemen anak bawaan tombol. */
 .st-key-a11y [data-testid="stPopoverButton"]::before { content: ""; position: absolute; inset: 0; margin: auto;
   width: 1.7rem; height: 1.7rem;
   background: currentColor; -webkit-mask: ICON center / contain no-repeat; mask: ICON center / contain no-repeat; }
@@ -194,8 +171,7 @@ A11Y_CSS = """
 @media (max-width: 640px) { .st-key-a11y { top: auto; bottom: 1rem; transform: none; } }
 """.replace("ICON", _A11Y_ICON)
 
-# "Hentikan animasi": aturan yang sama dengan @media (prefers-reduced-motion) di story.css,
-# tetapi berlaku atas pilihan pengguna, bukan hanya pengaturan sistem operasi.
+# "Hentikan animasi": sama dengan prefers-reduced-motion di story.css, tapi atas pilihan pengguna.
 STILL_CSS = """
 *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 .ws-chart .ws-draw { stroke-dashoffset: 0 !important; }
@@ -225,8 +201,7 @@ _SMALL_WORDS = {"dan", "atau", "di", "ke", "dari", "pada", "per", "untuk", "deng
 
 
 def title_case(text: str) -> str:
-    """Huruf kapital di awal setiap kata (juga tiap unsur kata ulang dan kata bergaris miring),
-    kecuali kata tugas. Singkatan (PCA, LQ, TW II) dan notasi seperti z-score dibiarkan."""
+    """Huruf kapital di awal setiap kata, kecuali kata tugas; singkatan dan z-score dibiarkan."""
     def cap(word):
         if not word or not word[0].islower() or word.startswith("z-"):
             return word
@@ -254,8 +229,7 @@ def page_kicker(text: str):
 
 
 def footer():
-    """Kolofon di akhir setiap halaman: judul, pembuat, dan mata kuliah. Sumber data tidak diulang
-    di sini; sudah ada di bawah setiap grafik dan di halaman Data & metode."""
+    """Kolofon di akhir setiap halaman: judul, pembuat, dan mata kuliah."""
     def line(*parts):
         # Tiap bagian dibungkus span agar baris hanya patah di antara bagian, bukan di tengahnya.
         return " · ".join(f"<span>{x}</span>" for x in parts if x)
@@ -270,8 +244,7 @@ def footer():
 
 
 def source(extra: str = ""):
-    """Baris sumber di bawah setiap visualisasi (wajib menurut ketentuan ujian).
-    Diawali "Sumber: BPS" persis seperti bunyi ketentuan, lalu rincian tabelnya."""
+    """Baris sumber di bawah setiap visualisasi (wajib menurut ketentuan ujian)."""
     tail = f" {extra[:1].upper()}{extra[1:]}." if extra else ""
     st.html(f'<p class="src">Sumber: BPS (<a href="{BPS_SOURCE_URL}" target="_blank">{SOURCE_CITE}</a>), '
             f'diolah {ACCESS_DATE}.{tail}</p>')
@@ -288,8 +261,7 @@ def note(text: str):
 
 
 def swatches(title: str, labels, colors, note_text: str = "", center: bool = False):
-    """Legenda kelas peta sebagai HTML: membungkus rapi di layar sempit,
-    dan teksnya tetap berwarna tinta (bukan warna kelas)."""
+    """Legenda kelas peta sebagai HTML agar membungkus rapi di layar sempit."""
     items = "".join(
         f'<span><i style="background:{c}"></i>{lab}</span>' for lab, c in zip(labels, colors)
     )

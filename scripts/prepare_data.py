@@ -1,15 +1,5 @@
 """Pra-pemrosesan: jalankan sekali sebelum `streamlit run app.py`.
-
-    python scripts/prepare_data.py
-
-Masukan
-    data/raw/pdrb_2026.xlsx      unduhan tabel BPS (format lebar)
-    data/geo/kabkota.geojson     batas kab/kota, kode wilayah BPS 2019
-Keluaran (data/processed/)
-    pdrb_long.csv                tidy, hanya TW I dan TW II yang terisi
-    wilayah.csv                  kode, nama, provinsi, pulau, titik pusat
-    kabkota_simplified.geojson   geometri disederhanakan (~1,5 MB) untuk web
-"""
+Ubah xlsx BPS + GeoJSON mentah menjadi pdrb_long.csv, wilayah.csv, dan GeoJSON sederhana."""
 
 from pathlib import Path
 import json
@@ -26,8 +16,7 @@ from config import (  # noqa: E402
 )
 from preprocess import attach_regions, to_long, validate  # noqa: E402
 
-# Toleransi Douglas-Peucker dalam derajat (~0,01 derajat = 1,1 km di ekuator).
-# Cukup untuk tampilan nasional dan provinsi; garis pantai tetap terbaca.
+# Toleransi Douglas-Peucker dalam derajat (~1,1 km di ekuator); garis pantai tetap terbaca.
 SIMPLIFY_TOLERANCE = 0.01
 COORD_DECIMALS = 3
 

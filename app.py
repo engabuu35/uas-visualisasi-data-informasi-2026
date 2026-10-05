@@ -1,8 +1,5 @@
 """Satu Negeri, 514 Wajah Ekonomi - PDRB kabupaten/kota Indonesia, TW I-II 2026.
-
-Struktur "martini glass" (Segel & Heer, 2010): halaman Cerita dipandu penulis,
-lalu tiga halaman Jelajah membebaskan pembaca menggali sendiri.
-"""
+Struktur "martini glass": Cerita dipandu penulis, lalu halaman Jelajah bebas digali pembaca."""
 
 from pathlib import Path
 import sys
@@ -27,8 +24,7 @@ if not (PROCESSED_CSV.exists() and GEOJSON.exists()):
     st.error("Data olahan belum ada. Jalankan dulu: `python scripts/prepare_data.py`")
     st.stop()
 
-# Panel Aksesibilitas melayang di tepi kiri (menggantikan sidebar). Pembaca tema ikut di sini:
-# wadahnya fixed, jadi keduanya tidak memakan ruang halaman.
+# Panel Aksesibilitas melayang di tepi kiri (pengganti sidebar); pembaca tema ikut di wadah fixed ini.
 with st.container(key="a11y"):
     theme.sync()
     with st.popover("Aksesibilitas"):
@@ -57,8 +53,7 @@ pages = [
     st.Page("views/tentang.py", title="Data & metode"),
 ]
 current = st.navigation(pages, position="top")
-# Latar isi halaman Jelajah mengikuti warna babaknya; navbar tetap warna bawaan di semua halaman.
-# Bukan di .stApp: theme.sync membaca latar itu.
+# Latar halaman Jelajah mengikuti warna babaknya (bukan di .stApp: theme.sync membaca latar itu).
 PAGE_BG = {"struktur": 1, "peta": 2, "hierarki": 3, "tentang": 4}
 if current.url_path in PAGE_BG:
     i = PAGE_BG[current.url_path]

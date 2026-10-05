@@ -1,14 +1,4 @@
-"""Halaman Cerita: scrollytelling empat babak (tangkai 'martini glass').
-
-    I   Konsentrasi PDRB ekonomi besar yang bertumpu pada sedikit tempat
-    II  Pola Ekonomi   banyak daerahnya, kecil porsinya
-    III Pertumbuhan     yang tumbuh paling cepat ada di luar pusat
-    IV  Pergeseran  pertumbuhan lebih cepat belum menutup jarak
-
-Setiap angka di teks diambil dari story.figures(); halaman ini hanya
-merangkai kalimat. Kalimat yang bergantung pada peringkat (siapa tercepat,
-siapa paling lambat) dibentuk dari data, bukan dari asumsi penulis.
-"""
+"""Halaman Cerita: scrollytelling empat babak; semua angka diambil dari story.figures()."""
 
 import json
 import re
@@ -32,17 +22,15 @@ ASSETS = Path(__file__).resolve().parents[1] / "assets"
 f = story.figures()
 reg = data.regions()
 TK = theme.tokens()
-# Babak ke-i memakai --tk-act{i}/--tk-tint{i} di CSS (berganti seketika saat tema
-# berubah) dan hex aksennya untuk atribut SVG (digambar ulang lewat rerun).
+# Babak ke-i memakai --tk-act{i}/--tk-tint{i} di CSS dan hex aksennya untuk atribut SVG.
 A = {a["key"]: dict(a, i=i + 1, accent=TK.acts[i][0]) for i, a in enumerate(ACTS)}
 # Warna klaster bergantung pada tema & palet, jadi ditempel di sini, bukan di cache.
 _cmap = data.cluster_colors(data.multivariate(story.PERIOD))
 f["clusters"] = [dict(r, color=_cmap[r["klaster"]]) for r in f["clusters"]]
 
 
-# Sanitizer HTML Streamlit membuang semua elemen <svg>, tetapi skrip tetap
-# berjalan. Maka markup SVG dikirim sebagai data di dalam skrip dan disisipkan
-# ke slot-slotnya di sisi klien (lihat awal story.js).
+# Sanitizer st.html membuang <svg>, jadi markup SVG dikirim sebagai data skrip dan
+# disisipkan ke slotnya di sisi klien (lihat story.js).
 SLOTS: dict[str, str] = {}
 
 
@@ -71,8 +59,7 @@ def trillion(v):
 
 def source(extra=""):
     tail = f" {extra[:1].upper()}{extra[1:]}." if extra else ""
-    # Versi pendek untuk ponsel: grafik yang tersemat tidak boleh habis dimakan
-    # catatan sumber. Rincian lengkapnya tetap ada di bagian metode.
+    # Versi pendek untuk ponsel agar grafik tidak habis dimakan catatan sumber.
     return (f'<p class="ws-src ws-only-desk">Sumber: BPS (<a href="{BPS_SOURCE_URL}" target="_blank" '
             f'rel="noopener">{SOURCE_CITE}</a>), diolah {ACCESS_DATE}.{tail}</p>'
             f'<p class="ws-src ws-only-mob">Sumber: BPS, PDRB Triwulanan ADHK 2010 kab/kota {f["year"]}, '
@@ -80,9 +67,7 @@ def source(extra=""):
 
 
 def card(title, *paras, icon=None, stat=None, stat_label=None, caveat=False):
-    """Pita kepala (ikon + judul), angka utama opsional, lalu paragraf.
-    `stat` hanya untuk kartu yang judulnya memang memuat SATU angka utama;
-    judulnya lalu dipendekkan menjadi label dan angkanya tampil besar."""
+    """Kartu cerita: pita kepala (ikon + judul), angka utama opsional (`stat`), lalu paragraf."""
     ico = slot(sv.ICONS[icon], "ws-ico") if icon else ""
     num = ""
     if stat is not None:
@@ -123,9 +108,7 @@ def act(key, title, dek, *scenes):
 n = f["n_regions"]
 T = trillion(f["national"])
 
-# =============================================================================
-# Hero
-# =============================================================================
+# --- Hero ---
 latlon = {k: (f["lat"][k], f["lon"][k]) for k in f["pdrb"]}
 stats = [
     (pct(f["jawa_share"]), "PDRB berasal dari Pulau Jawa"),
@@ -155,9 +138,7 @@ jawa_rp = round(f["jawa_share"])
 top_phrase = ("lebih dari seperempat" if f["top_share"] > 25
               else "hampir seperempat" if f["top_share"] > 20 else pct(f["top_share"]))
 
-# =============================================================================
-# Babak I · Pusat
-# =============================================================================
+# --- Babak I · Pusat ---
 act1 = act(
     "pusat", f"Separuh ekonomi terkonsentrasi di {f['n_half']} daerah",
     "Angka nasional terlihat kokoh, tetapi bertumpu hanya pada segelintir kabupaten/kota.",
@@ -194,9 +175,7 @@ act1 = act(
              svg_mobile=sv.concentration(f, A["pusat"]["accent"], compact=True)), 17, nudge=36),
 )
 
-# =============================================================================
-# Babak II · Pola Ekonomi
-# =============================================================================
+# --- Babak II · Pola Ekonomi ---
 agr, korp, gov = f["agr"], f["korp"], f["gov"]
 
 
@@ -293,9 +272,7 @@ act2 = act(
              sv.cluster_maps(f), f"batas wilayah: {GEO_SOURCE}"), 18, tall=True),
 )
 
-# =============================================================================
-# Babak III · Pertumbuhan
-# =============================================================================
+# --- Babak III · Pertumbuhan ---
 ig = f["island_growth"]
 fast1, fast2, slowest = ig[0], ig[1], ig[-1]
 jawa = f["jawa_growth"]
@@ -378,9 +355,7 @@ act3 = act(
           18, tall=True),
 )
 
-# =============================================================================
-# Babak IV · Pergeseran
-# =============================================================================
+# --- Babak IV · Pergeseran ---
 mo = f["moran"]
 delta = f["jawa_share_prev"] - f["jawa_share"]
 mining = f["mining"]
@@ -423,9 +398,7 @@ act4 = act(
              sv.lisa_map(f), f"batas wilayah: {GEO_SOURCE}", after=sv.lisa_legend(f)), 13),
 )
 
-# =============================================================================
-# Penutup
-# =============================================================================
+# --- Penutup ---
 end_growth = (f"Sejumlah wilayah di luar Jawa tumbuh lebih cepat pada triwulan ini, tetapi porsi Jawa baru "
               f"berubah {idn(delta, 2)} poin persentase." if outside_leads else
               f"Porsi Jawa berubah {idn(delta, 2)} poin persentase.")
@@ -455,8 +428,7 @@ rail = "".join(
 
 css = (ASSETS / "story.css").read_text(encoding="utf-8")
 js = (ASSETS / "story.js").read_text(encoding="utf-8")
-# DOMPurify (st.html) membuang SELURUH blok style/script yang teksnya memuat pola
-# mirip tag, tanpa pesan apa pun; halaman lalu tampil tanpa gaya. Gagal keras saja.
+# DOMPurify (st.html) diam-diam membuang blok style/script yang memuat pola mirip tag; gagal keras saja.
 for _name, _text in (("story.css", css), ("story.js", js)):
     if re.search(r"<[/\w]", _text):
         raise ValueError(f"{_name} memuat pola mirip tag (kurung sudut); st.html akan membuangnya.")
@@ -469,8 +441,7 @@ for _i, _k in enumerate(EXPLORE_ICONS, 1):
 body = ('<div class="ws">'
         f'{slot(sv.map_defs(), "ws-defs-slot")}{hero}{act1}{act2}{act3}{act4}{end}'
         f'<nav class="ws-rail" aria-label="Babak cerita">{rail}</nav></div>')
-# "<" ditulis sebagai <: DOMPurify (dipakai st.html) membuang skrip yang teksnya
-# memuat pola mirip tag. Ini sekaligus mencegah "</script>" menutup skrip lebih awal.
+# "<" di-escape agar lolos DOMPurify dan "</script>" tidak menutup skrip lebih awal.
 payload = json.dumps(SLOTS).replace("<", "\\u003c")
 st.html(
     f"<style>{css}</style>{body}<script>window.__WS_SVG = {payload};\n"
@@ -478,9 +449,7 @@ st.html(
     unsafe_allow_javascript=True,
 )
 
-# =============================================================================
-# Jelajah (dasbor penutup) + metode
-# =============================================================================
+# --- Jelajah (dasbor penutup) + metode ---
 with st.container(key="ws-explore"):
     st.markdown("#### Jelajahi sendiri")
     c1, c2, c3, c4 = st.columns(4, gap="medium")

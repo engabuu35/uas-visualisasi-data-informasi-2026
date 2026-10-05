@@ -5,8 +5,7 @@
   if (!root || root.dataset.ready) return;   // Streamlit bisa menjalankan ulang skrip
   root.dataset.ready = "1";
 
-  // SVG tiba sebagai data: sanitizer Streamlit membuang elemen svg dari HTML, dan
-  // skrip yang teksnya memuat pola mirip tag ikut dibuang, jadi jangan tulis tag di sini.
+  // SVG tiba sebagai data karena sanitizer membuang svg; jangan tulis tag di file ini.
   const svgs = window.__WS_SVG || {};
   root.querySelectorAll("[data-slot]").forEach((el) => { el.innerHTML = svgs[el.dataset.slot] || ""; });
 
@@ -46,8 +45,7 @@
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(centerFirst);
   const rail = [...root.querySelectorAll(".ws-rail button")];
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  // Tint dibaca dari variabel CSS babak (nilainya ikut tema aktif), bukan
-  // disalin sekali saat dimuat; kalau tidak, latar tertinggal setelah ganti tema.
+  // Tint dibaca langsung dari variabel CSS agar latar ikut tema aktif.
   let tints = [];
   const readTints = () => { tints = acts.map((a) => hex(getComputedStyle(a).getPropertyValue("--tint").trim())); };
   readTints();

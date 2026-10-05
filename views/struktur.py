@@ -36,7 +36,7 @@ st.html(
     'grafik.</p>'
 )
 
-# --- kontrol ----------------------------------------------------------------
+# --- kontrol ---
 c1, c2, c3, c4 = st.columns([1.1, 1, 2, 1])
 period = c1.segmented_control("Triwulan", PERIODS, default="Triwulan II", key="mv_period") or "Triwulan II"
 tw = period.replace("Triwulan", "TW")  # bentuk pendek untuk judul grafik satu baris
@@ -57,7 +57,7 @@ if focus.startswith("Klaster · "):
 elif focus.startswith("Provinsi · "):
     focus_set = set(prov.index[prov == focus.split(" · ", 1)[1]])
 
-# --- biplot (dengan seleksi) -----------------------------------------------
+# --- biplot (dengan seleksi) ---
 mobile = "Mobi" in st.context.headers.get("User-Agent", "")  # ponsel: tata letak grafik ringkas
 fig, trace_index = ch.pca_biplot(
     mv.scores, mv.explained, mv.loadings, mv.cluster, colors, names, prov,
@@ -130,7 +130,7 @@ with scr:
     st.plotly_chart(ch.scree(mv.explained, mv.n_pc_outlier), config=ch.PLOT_CONFIG)
     source("proporsi varians per komponen")
 
-# --- profil seleksi ---------------------------------------------------------
+# --- profil seleksi ---
 st.header("Profil daerah terpilih" if selected else "Profil per klaster")
 if selected:
     sel = sorted(selected)
@@ -169,7 +169,7 @@ else:
                     config=ch.PLOT_CONFIG)
     source("rata-rata z-score pangsa sektor per klaster Ward")
 
-# --- parallel coordinates ---------------------------------------------------
+# --- parallel coordinates ---
 st.header("Garis-garis yang searah")
 mag = np.hypot(mv.loadings["PC1"], mv.loadings["PC2"]).sort_values(ascending=False)
 default_dims = [c for c in SECTOR_CODES if c in set(mag.index[:8])]
@@ -194,8 +194,7 @@ if len(dims) >= 2:
     chart_title(f"Pangsa sektor tiap daerah (%), {tw} 2026")
     st.plotly_chart(ch.parallel_coords(mv.shares, mv.cluster, colors, dims, selected, compact=mobile), config={**ch.PLOT_CONFIG, "plotGlPixelRatio": 1},
                     key=f"pc_chart_{st.session_state.get('pc_reset', 0)}")
-    # Parallel coordinates Plotly tidak punya legenda bawaan; tanpa ini warna
-    # klaster tidak bisa dibaca sama sekali.
+    # Parallel coordinates Plotly tidak punya legenda bawaan.
     if selected:
         tk = theme.tokens()
         swatches("Garis", ["Daerah terpilih", "Lainnya"], [tk.accent_deep, tk.rule])
@@ -205,7 +204,7 @@ if len(dims) >= 2:
 else:
     st.info("Pilih minimal dua sektor.")
 
-# --- heatmap terklaster -----------------------------------------------------
+# --- heatmap terklaster ---
 st.header("Heatmap terklaster")
 st.markdown(
     "Baris diurutkan menurut dendrogram Ward dan kolom menurut kemiripan pola antarsektor, sehingga "
@@ -220,7 +219,7 @@ st.plotly_chart(
 swatches("Klaster", list(colors), list(colors.values()))
 source("z-score pangsa sektor dipotong pada ±3")
 
-# --- pencilan ---------------------------------------------------------------
+# --- pencilan ---
 st.header("Yang tidak masuk pola mana pun")
 out = mv.mahalanobis[mv.outlier].sort_values(ascending=False)
 st.markdown(

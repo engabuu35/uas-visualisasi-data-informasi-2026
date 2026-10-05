@@ -13,13 +13,10 @@ from sklearn.preprocessing import StandardScaler
 
 from config import SECTOR_GROUP, SECTOR_SHORT
 
-# ---------------------------------------------------------------------------
-# Multivariat
-# ---------------------------------------------------------------------------
+# --- Multivariat ---
 
-# Nama klaster diturunkan dari sektor yang paling menonjol (z-score rata-rata
-# tertinggi) pada pusat klaster. Urutan daftar ini juga menentukan warna,
-# sehingga warna mengikuti "jenis ekonomi", bukan nomor klaster dari Ward.
+# Nama klaster dari sektor dengan z-score rata-rata tertinggi; urutan daftar menentukan warna,
+# sehingga warna mengikuti "jenis ekonomi", bukan nomor klaster Ward.
 CLUSTER_NAMES = [
     "Basis Pertanian",
     "Basis Industri",
@@ -58,10 +55,7 @@ class MultivariateResult:
 
 def run_multivariate(shares: pd.DataFrame, k: int = 6, alpha: float = 0.01) -> MultivariateResult:
     """PCA, klaster Ward, dan pencilan Mahalanobis pada z-score pangsa sektor.
-
-    Pencilan diukur pada PC yang menjelaskan >= 80% varians (bukan 17 PC: pangsa
-    berjumlah 100, sehingga PC terakhir bervarians ~0), dengan ambang chi-kuadrat 1%.
-    """
+    Pencilan diukur pada PC yang menjelaskan >= 80% varians, ambang chi-kuadrat 1%."""
     z = pd.DataFrame(
         StandardScaler().fit_transform(shares), index=shares.index, columns=shares.columns,
     )
@@ -140,16 +134,10 @@ def cluster_colors(names, palette) -> dict:
     return out
 
 
-# ---------------------------------------------------------------------------
-# Klasifikasi peta
-# ---------------------------------------------------------------------------
+# --- Klasifikasi peta ---
 
 def jenks_breaks(values, k: int) -> list[float]:
-    """Natural breaks Fisher-Jenks (pemrograman dinamis, O(k n^2)).
-
-    Meminimalkan jumlah kuadrat simpangan di dalam kelas. Mengembalikan k+1
-    batas (min .. max).
-    """
+    """Natural breaks Fisher-Jenks (pemrograman dinamis, O(k n^2)); mengembalikan k+1 batas."""
     x = np.sort(np.asarray(values, dtype=float))
     x = x[~np.isnan(x)]
     n = len(x)
@@ -199,16 +187,11 @@ def _fmt(v, fmt):
     return fmt.format(v).replace(".", ",") if np.isfinite(v) else "∞"
 
 
-# ---------------------------------------------------------------------------
-# Autokorelasi spasial
-# ---------------------------------------------------------------------------
+# --- Autokorelasi spasial ---
 
 def knn_weights(lat, lon, k: int = 6) -> np.ndarray:
-    """Matriks bobot k-tetangga terdekat (jarak haversine), distandardisasi baris.
-
-    Dipilih alih-alih ketetanggaan queen karena banyak kab/kota kepulauan
-    tidak bersinggungan dengan wilayah mana pun.
-    """
+    """Bobot k-tetangga terdekat (haversine), distandardisasi baris.
+    Dipilih alih-alih queen karena banyak kab/kota kepulauan tidak bersinggungan."""
     lat_r, lon_r = np.radians(lat), np.radians(lon)
     dlat = lat_r[:, None] - lat_r[None, :]
     dlon = lon_r[:, None] - lon_r[None, :]
@@ -222,12 +205,7 @@ def knn_weights(lat, lon, k: int = 6) -> np.ndarray:
 
 
 def moran(values: np.ndarray, w: np.ndarray, permutations: int = 999, seed: int = 7) -> dict:
-    """Moran's I global + LISA dengan uji permutasi.
-
-    LISA memakai permutasi bersyarat: untuk wilayah i, nilai tetangganya
-    diacak dari wilayah lain (dengan pengembalian, pendekatan yang umum
-    dipakai untuk efisiensi).
-    """
+    """Moran's I global + LISA dengan uji permutasi bersyarat (dengan pengembalian)."""
     rng = np.random.default_rng(seed)
     x = np.asarray(values, dtype=float)
     z = (x - x.mean()) / x.std()
@@ -269,17 +247,11 @@ def moran(values: np.ndarray, w: np.ndarray, permutations: int = 999, seed: int 
     }
 
 
-# ---------------------------------------------------------------------------
-# Hierarki
-# ---------------------------------------------------------------------------
+# --- Hierarki ---
 
 def build_hierarchy(long: pd.DataFrame, period: str, order: str = "wilayah") -> pd.DataFrame:
-    """Simpul treemap/icicle. Ukuran = PDRB ADHK `period`; warna = pertumbuhan
-    TW II vs TW I dari JUMLAH nilai di bawah simpul (bukan rata-rata warna Plotly).
-
-    order = "wilayah": Indonesia > Pulau > Provinsi > Kab/Kota > Sektor
-    order = "sektor" : Indonesia > Kelompok > Sektor > Pulau > Provinsi
-    """
+    """Simpul treemap/icicle: ukuran = PDRB ADHK `period`, warna = pertumbuhan TW II vs TW I
+    dari jumlah nilai di bawah simpul. `order` = "wilayah" atau "sektor" (urutan tingkat)."""
     d = long[long["kode_sektor"] != "TOTAL"].copy()
     d["kelompok"] = d["kode_sektor"].map(SECTOR_GROUP)
     d["sektor_singkat"] = d["kode_sektor"].map(SECTOR_SHORT)

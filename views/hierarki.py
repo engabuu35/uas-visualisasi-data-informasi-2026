@@ -58,7 +58,7 @@ st.plotly_chart(ch.treemap(h, lim, root), config=ch.PLOT_CONFIG, key=f"tm_{order
 source(f"ukuran: PDRB ADHK {period} 2026 (miliar Rp); warna: pertumbuhan q-to-q, "
        f"dipotong pada ±{idn(lim, 0)}%")
 
-# --- ringkasan simpul yang sedang dibuka -----------------------------------
+# --- ringkasan simpul yang sedang dibuka ---
 node = h[h["id"] == root].iloc[0]
 kids = h[h["parent"] == root]
 if len(kids):

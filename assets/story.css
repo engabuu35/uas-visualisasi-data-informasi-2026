@@ -36,8 +36,7 @@
 .ws-hero-l1 { position: absolute; inset: 0; z-index: 1;   /* teks terbaca, langit tetap terlihat */
   background: linear-gradient(to top, rgba(var(--tk-veil-rgb),.85), rgba(var(--tk-veil-rgb),.4) 42%, transparent 72%); }
 .ws-hero-l2 { position: absolute; inset: 0; z-index: 2;   /* menenangkan area di balik kolom teks saja */
-  /* Titik berhenti diikat ke tepi kanan kolom teks (--col: margin wadah + padding + max-width .ws-dek),
-     bukan persen layar, agar tetap menutup paragraf di layar sempit maupun lebar. */
+  /* Titik berhenti diikat ke tepi kanan kolom teks (--col), bukan persen layar. */
   --col: calc(max(0px, (100% - 1180px) / 2) + 1.5rem + 36rem);
   background: linear-gradient(to right, rgba(var(--tk-veil-rgb),.88), rgba(var(--tk-veil-rgb),.8) calc(var(--col) - 14rem),
     rgba(var(--tk-veil-rgb),.5) calc(var(--col) - 4rem), rgba(var(--tk-veil-rgb),.2) calc(var(--col) + 3rem),
@@ -87,8 +86,7 @@
 .ws-ico { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.9rem; height: 1.9rem;
   border-radius: .55rem; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .ws-ico svg { display: block; width: 18px; height: 18px; }
-/* Angka utama: besar, tebal, digit selebar sama; label di sampingnya, turun ke
-   bawah sendiri kalau tidak muat. */
+/* Angka utama: besar, tebal, digit selebar sama; label di sampingnya. */
 .ws-card-stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .55rem; margin: 0 0 .6rem; }
 .ws-card-stat-v { font-size: 2rem; font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; color: var(--ink);
   font-variant-numeric: tabular-nums; }
@@ -187,8 +185,7 @@
   .ws-stat b { font-size: 1.45rem; }
   .ws-scene { flex-direction: column; gap: 0; padding: 0 1rem; }
   .ws-act-head, .ws-hero-copy { padding-left: 1rem; padding-right: 1rem; }
-  /* Grafik di atas kartu (z-index lebih tinggi, latar buram) sehingga kartu
-     yang lewat masuk ke BALIK grafik, bukan menimpanya. */
+  /* Grafik di atas kartu agar kartu yang lewat masuk ke balik grafik. */
   .ws-stage { order: -1; width: 100%; max-width: none; top: 60px; z-index: 3; padding: .5rem 0;
     background: var(--ws-bg, var(--tk-tint1)); }
   .ws-chart { padding: .7rem .75rem .6rem; }

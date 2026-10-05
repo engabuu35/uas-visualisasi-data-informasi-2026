@@ -19,8 +19,7 @@ SELECT_CONFIG = {"displaylogo": False, "responsive": True, "modeBarButtonsToRemo
 MAP_CONFIG = {"displaylogo": False, "responsive": True, "scrollZoom": True,
               "modeBarButtonsToRemove": ["toImage"]}
 
-# Warna TIDAK disimpan sebagai konstanta modul: setiap fungsi membaca token
-# aktif (mode terang/gelap x palet) saat dipanggil, lewat `tk = tokens()`.
+# Warna tidak disimpan sebagai konstanta: tiap fungsi membaca token aktif lewat `tk = tokens()`.
 
 
 def idn(value, nd=1):
@@ -63,9 +62,7 @@ def base_layout(fig, height=420, title=None, legend=True, margin=None):
     return fig
 
 
-# ---------------------------------------------------------------------------
-# Peta (dasar)
-# ---------------------------------------------------------------------------
+# --- Peta (dasar) ---
 
 def _hbar(title, **kw):
     """Colorbar mendatar di bawah grafik, rata tengah."""
@@ -75,10 +72,7 @@ def _hbar(title, **kw):
 
 def _map_view(regions: pd.DataFrame | None, width_px: int = 900):
     """Pusat dan zoom agar kotak batas wilayah muat pada lebar peta perkiraan.
-
-    Pada Web Mercator, lebar dunia = 512 x 2^zoom piksel, sehingga
-    zoom = log2(lebar_px x 360 / (rentang_bujur x 512)).
-    """
+    Web Mercator: zoom = log2(lebar_px x 360 / (rentang_bujur x 512))."""
     if regions is None or regions.empty:
         lat0, lat1, lon0, lon1 = -11.0, 6.0, 95.0, 141.0
     else:
@@ -116,10 +110,8 @@ def class_colors(n: int, kind: str):
 
 
 def signed_class_colors(breaks):
-    """Warna divergen untuk kelas yang batasnya tidak simetris terhadap nol
-    (mis. kuantil pertumbuhan). Kelas sepenuhnya < 0 diberi lengan biru,
-    sepenuhnya > 0 lengan jingga, kelas yang memuat nol diberi abu tengah.
-    Skema sekuensial di sini keliru: data bertanda butuh titik tengah."""
+    """Warna divergen untuk kelas yang tidak simetris terhadap nol: < 0 lengan biru,
+    > 0 lengan jingga, kelas yang memuat nol abu tengah."""
     tk = tokens()
     blue_arm = tk.div_neg[::-1]           # dekat tengah -> ekstrem
     edges = list(zip(breaks[:-1], breaks[1:]))
@@ -136,8 +128,7 @@ def signed_class_colors(breaks):
 def choropleth_classes(geojson, df, class_col, labels, colors, hover_cols,
                        hover_template, view_regions=None, height=560,
                        highlight=None, width_px=900):
-    """Choropleth kelas diskret dalam SATU trace (GeoJSON tidak diduplikasi
-    per kelas, penting untuk ukuran halaman di ponsel)."""
+    """Choropleth kelas diskret dalam satu trace agar GeoJSON tidak diduplikasi per kelas."""
     tk = tokens()
     codes = {lab: i for i, lab in enumerate(labels)}
     z = df[class_col].map(codes).astype(float) + 0.5
@@ -186,17 +177,12 @@ def bubble_legend(values, max_px=34):
     return [(v, max_px * math.sqrt(v / vmax)) for v in nice]
 
 
-# ---------------------------------------------------------------------------
-# Multivariat
-# ---------------------------------------------------------------------------
+# --- Multivariat ---
 
 def pca_biplot(scores, explained, loadings, cluster, colors, names, provinces,
                highlight=None, outliers=None, show_arrows=True, label_outliers=5, n_arrows=7, compact=False):
-    """Biplot PC1-PC2. Satu trace per klaster (warna + bentuk = encoding ganda).
-
-    Mengembalikan (fig, trace_index) - trace_index[curve][point] = kode wilayah,
-    dipakai untuk menerjemahkan event seleksi Streamlit.
-    """
+    """Biplot PC1-PC2, satu trace per klaster. Mengembalikan (fig, trace_index);
+    trace_index[curve][point] = kode wilayah untuk menerjemahkan event seleksi."""
     tk = tokens()
     fig = go.Figure()
     trace_index = []
@@ -241,8 +227,7 @@ def pca_biplot(scores, explained, loadings, cluster, colors, names, provinces,
                                arrowwidth=0.8, arrowcolor=tk.muted, ax=ax, ay=ay,
                                font=dict(size=11, color=tk.soft))
 
-    # Rentang sumbu mengikuti sebaran data dengan skala X:Y setara. Kelebihan ruang mendatar
-    # diisi rentang X; kelebihan ruang tegak memperkecil area plot (bukan rentang Y kosong).
+    # Rentang sumbu mengikuti sebaran data dengan skala X:Y setara.
     pad = lambda lo, hi: [lo - (hi - lo) * .08, hi + (hi - lo) * .08]
     base_layout(fig, height=440 if compact else 600)
     fig.update_layout(dragmode="lasso", legend=dict(y=1.02, font=dict(size=11)),
@@ -273,8 +258,7 @@ def scree(explained, n_pc_outlier):
 
 
 def parallel_coords(shares, cluster, colors, dims, highlight=None, compact=False):
-    """Parallel coordinates pangsa sektor. Garis terpilih digambar paling akhir
-    agar berada di atas."""
+    """Parallel coordinates pangsa sektor; garis terpilih digambar paling akhir agar di atas."""
     tk = tokens()
     d = shares[dims].copy()
     d["_c"] = cluster
@@ -299,8 +283,7 @@ def parallel_coords(shares, cluster, colors, dims, highlight=None, compact=False
 
     def axis(c):
         top = float(np.ceil(d[c].quantile(0.995)))
-        # Nilai di atas persentil 99,5 diletakkan di puncak sumbu (ditandai "≥"), agar garisnya
-        # tidak keluar dari area grafik. Tiga penanda saja (0, tengah, maks) dengan satuan %.
+        # Nilai di atas persentil 99,5 dipotong di puncak sumbu (ditandai "≥") agar tidak keluar grafik.
         vals = [0, round(top / 2), top]
         over = (d[c] > top).any()
         return dict(label=SECTOR_SHORT[c], values=d[c].clip(upper=top), range=[0, top], tickvals=vals,
@@ -320,8 +303,8 @@ def parallel_coords(shares, cluster, colors, dims, highlight=None, compact=False
 
 
 def clustered_heatmap(z, row_order, col_order, cluster, colors, names, highlight=None):
-    """Heatmap terklaster: baris = wilayah (urutan dendrogram Ward),
-    kolom = sektor (urutan dendrogram korelasi). Strip kiri = klaster."""
+    """Heatmap terklaster: baris = wilayah (dendrogram Ward), kolom = sektor (dendrogram
+    korelasi), strip kiri = klaster."""
     tk = tokens()
     rows = [r for r in row_order if (not highlight or r in highlight)]
     zz = z.loc[rows, col_order].clip(-3, 3)
@@ -393,9 +376,7 @@ def profile_dumbbell(sel_median, all_median, label="Terpilih"):
     return fig
 
 
-# ---------------------------------------------------------------------------
-# Geospasial - Moran
-# ---------------------------------------------------------------------------
+# --- Geospasial - Moran ---
 
 def moran_scatter(z, lag, quadrant, names, I):
     tk = tokens()
@@ -423,9 +404,7 @@ def moran_scatter(z, lag, quadrant, names, I):
     return fig
 
 
-# ---------------------------------------------------------------------------
-# Hierarki
-# ---------------------------------------------------------------------------
+# --- Hierarki ---
 
 def _luminance(hex_color):
     def lin(v):
@@ -436,10 +415,8 @@ def _luminance(hex_color):
 
 
 def _label_colors(values, scale, lim):
-    """Warna teks per kotak: hitam atau putih, mana yang kontrasnya lebih tinggi
-    terhadap warna kotak. Plotly memilih #444/putih sendiri, dan keduanya hanya
-    sekitar 3:1 di warna tengah skala. Warna kotak dihitung ulang seperti Plotly
-    (interpolasi RGB linear di antara titik skala)."""
+    """Warna teks per kotak (hitam/putih) dengan kontras tertinggi terhadap warna kotak,
+    yang dihitung ulang seperti Plotly (interpolasi RGB linear)."""
     dark_txt, light_txt = LABEL_INK
     l_dark, l_light = _luminance(dark_txt), _luminance(light_txt)
     pos = [p for p, _ in scale]
@@ -458,8 +435,7 @@ def _hier_common(h, color_lim):
     # Pertumbuhan dari basis nol tidak terdefinisi; tampilkan apa adanya alih-alih "nan%".
     growth_txt = h["tumbuh"].map(lambda v: "tidak dapat dihitung (TW I = 0)" if pd.isna(v)
                                  else signed(v, 2) + "%")
-    # Versi pendek untuk label kotak: pertumbuhan ikut ditulis, bukan hanya lewat
-    # warna (WCAG 1.4.1), dengan tanda +/− sebagai teks, bukan panah berwarna.
+    # Pertumbuhan ikut ditulis di label kotak, bukan hanya lewat warna (WCAG 1.4.1).
     growth_short = h["tumbuh"].map(lambda v: "–" if pd.isna(v) else signed(v, 1) + "%")
     custom = np.column_stack([
         h["tingkat"], h["nilai"], h["pangsa_induk"].fillna(100), growth_txt, h["q1"], h["q2"], growth_short,

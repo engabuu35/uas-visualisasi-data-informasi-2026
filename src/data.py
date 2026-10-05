@@ -68,8 +68,7 @@ def weights(k: int = SPATIAL_K) -> np.ndarray:
 
 @st.cache_data(show_spinner=False)
 def moran(indicator: str, sector: str, period: str) -> dict:
-    """Moran's I + LISA. Wilayah tanpa nilai (mis. pertumbuhan dari basis nol)
-    dikeluarkan, lalu bobot tetangganya distandardisasi ulang."""
+    """Moran's I + LISA; wilayah tanpa nilai dikeluarkan, lalu bobot distandardisasi ulang."""
     v = indicator_values(indicator, sector, period)
     mask = v.notna().to_numpy()
     w = weights()[np.ix_(mask, mask)]

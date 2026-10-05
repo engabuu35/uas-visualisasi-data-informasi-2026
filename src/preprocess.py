@@ -1,10 +1,4 @@
-"""Membaca tabel BPS dan membentuk tabel turunan yang dipakai aplikasi.
-
-Alur:
-    Excel BPS (lebar, 17 sektor x 5 periode)  ->  to_long()
-    long + kode wilayah                       ->  attach_regions()
-    long                                      ->  wide_values() / shares() / lq()
-"""
+"""Membaca tabel BPS dan membentuk tabel turunan yang dipakai aplikasi."""
 
 from __future__ import annotations
 
@@ -16,8 +10,7 @@ import pandas as pd
 
 from config import PERIODS, SECTOR_CODES, TOTAL_LABEL
 
-# Kode KBLI di depan nama kategori ("A", "M,N", "R,S,T,U"), wajib diikuti spasi
-# agar "Produk Domestik..." tidak terbaca sebagai kode "P".
+# Kode KBLI di depan nama kategori, wajib diikuti spasi agar "Produk..." tidak terbaca "P".
 _CODE_RE = re.compile(r"^([A-Z](?:,[A-Z])*)\s+(.+)$")
 
 
@@ -33,14 +26,7 @@ def split_category(label: str) -> tuple[str, str]:
 
 
 def to_long(path: str | Path) -> pd.DataFrame:
-    """Ubah tabel lebar BPS menjadi format panjang (tidy).
-
-    Tata letak berkas unduhan BPS:
-        baris 2 : nama kategori (setiap 5 kolom)
-        baris 3 : tahun
-        baris 4 : Triwulan I .. IV, Tahunan
-        baris 5+: satu baris per kabupaten/kota; '-' berarti belum tersedia
-    """
+    """Ubah tabel lebar BPS (baris 2 kategori, 3 tahun, 4 periode, 5+ data) ke format panjang."""
     raw = pd.read_excel(path, header=None, dtype=object)
 
     blocks = []
@@ -103,9 +89,7 @@ def attach_regions(long: pd.DataFrame, regions: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# ---------------------------------------------------------------------------
-# Tabel turunan
-# ---------------------------------------------------------------------------
+# --- Tabel turunan ---
 
 def wide_values(long: pd.DataFrame, period: str) -> pd.DataFrame:
     """Matriks wilayah (kode) x 17 sektor, miliar rupiah."""
@@ -115,28 +99,19 @@ def wide_values(long: pd.DataFrame, period: str) -> pd.DataFrame:
 
 
 def shares(values: pd.DataFrame) -> pd.DataFrame:
-    """Pangsa sektor (%) terhadap jumlah 17 sektor di wilayah yang sama.
-
-    Penyebutnya jumlah 17 sektor, bukan baris PDRB, supaya setiap baris tepat
-    berjumlah 100. Selisih keduanya karena pembulatan BPS, maksimal 0,02%.
-    """
+    """Pangsa sektor (%) terhadap jumlah 17 sektor (bukan baris PDRB) agar tiap baris = 100."""
     return values.div(values.sum(axis=1), axis=0) * 100
 
 
 def location_quotient(values: pd.DataFrame) -> pd.DataFrame:
-    """LQ_ij = (x_ij / x_i.) / (X_.j / X_..).
-
-    LQ > 1: sektor j lebih terkonsentrasi di wilayah i dibanding nasional
-    (indikasi sektor basis). Rasio, sehingga sah untuk choropleth.
-    """
+    """LQ_ij = (x_ij / x_i.) / (X_.j / X_..); LQ > 1 menandakan sektor basis."""
     regional = values.div(values.sum(axis=1), axis=0)
     national = values.sum(axis=0) / values.to_numpy().sum()
     return regional.div(national, axis=1)
 
 
 def growth_qtq(long: pd.DataFrame) -> pd.DataFrame:
-    """Pertumbuhan TW II terhadap TW I (%), per wilayah x sektor, ditambah TOTAL
-    (jumlah 17 sektor, sama dengan penyebut pangsa)."""
+    """Pertumbuhan TW II terhadap TW I (%) per wilayah x sektor, plus TOTAL (jumlah 17 sektor)."""
     sub = long[long["periode"].isin(PERIODS) & (long["kode_sektor"] != "TOTAL")]
     wide = sub.pivot_table(index=["kode", "kode_sektor"], columns="periode", values="nilai")
     q1, q2 = wide["Triwulan I"], wide["Triwulan II"]

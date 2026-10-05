@@ -1,8 +1,4 @@
-"""Grafik SVG buatan tangan untuk halaman Cerita.
-
-SVG inline terbaca pembaca layar, tajam di layar apa pun, dan small multiples cukup
-merujuk satu definisi geometri (<use>). Angka dihitung di story.py, bukan di sini.
-"""
+"""Grafik SVG buatan tangan untuk halaman Cerita; angka dihitung di story.py, bukan di sini."""
 
 from __future__ import annotations
 
@@ -16,14 +12,12 @@ import data
 from charts import idn, signed
 from theme import tokens
 
-# Bingkai peta: kotak batas Indonesia (derajat) diproyeksikan equirectangular.
-# Di lintang khatulistiwa distorsinya diabaikan untuk peta ikhtisar.
+# Bingkai peta: kotak batas Indonesia diproyeksikan equirectangular (distorsi kecil di khatulistiwa).
 LON0, LON1, LAT0, LAT1 = 94.6, 141.4, -11.2, 6.3
 MAP_W = 1000
 _SCALE = MAP_W / (LON1 - LON0)
 MAP_H = round((LAT1 - LAT0) * _SCALE)
-# Toleransi penyederhanaan untuk peta cerita (derajat). Peta kecil dan hero
-# tidak butuh detail 1 km; 0,025 derajat memangkas ukuran path lebih dari separuh.
+# Toleransi penyederhanaan peta cerita (derajat); memangkas ukuran path lebih dari separuh.
 STORY_TOLERANCE = 0.025
 SMALL_AREA_KM2 = 1500  # di bawah ini poligon < ~2 px pada peta kecil; diberi penanda titik
 
@@ -78,9 +72,7 @@ def _land(fill=None, edge=None, width=0.6) -> str:
     return f'<use href="#ws-land" fill="{fill}" stroke="{edge}" stroke-width="{width}"/>'
 
 
-# ---------------------------------------------------------------------------
-# Ikon kartu cerita: hiasan (aria-hidden), garis 24 px dengan currentColor.
-# ---------------------------------------------------------------------------
+# --- Ikon kartu cerita: hiasan (aria-hidden), garis 24 px dengan currentColor. ---
 _ICON_PATHS = {
     "uang": '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>'
             '<path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
@@ -115,13 +107,10 @@ ICONS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Hero
-# ---------------------------------------------------------------------------
+# --- Hero ---
 
 def hero_map(f: dict, regions_latlon: dict, color: str) -> str:
-    """Daratan gelap dengan lingkaran PDRB (luas sebanding nilai). Gambar
-    pembuka ini adalah datanya sendiri, bukan foto hiasan."""
+    """Daratan dengan lingkaran PDRB (luas sebanding nilai) sebagai gambar pembuka."""
     vals = f["pdrb"]
     vmax = max(vals.values())
     r_max = 30
@@ -137,14 +126,10 @@ def hero_map(f: dict, regions_latlon: dict, color: str) -> str:
             f'{"".join(dots)}</g></svg>')
 
 
-# ---------------------------------------------------------------------------
-# Babak I: kurva konsentrasi
-# ---------------------------------------------------------------------------
+# --- Babak I: kurva konsentrasi ---
 
 def concentration(f: dict, accent: str, compact: bool = False) -> str:
-    """compact=True: varian ponsel. viewBox yang lebih sempit membuat teks
-    12 px tetap sekitar 11 px di layar 360 px; versi lebar akan mengecil
-    menjadi ~6 px dan tidak terbaca."""
+    """Kurva konsentrasi; compact=True memakai viewBox sempit agar teks tetap terbaca di ponsel."""
     tk = tokens()
     y = f["conc_y"]
     n = len(y)
@@ -189,13 +174,10 @@ def concentration(f: dict, accent: str, compact: bool = False) -> str:
 </svg>'''
 
 
-# ---------------------------------------------------------------------------
-# Babak II: dumbbell porsi daerah vs porsi PDRB
-# ---------------------------------------------------------------------------
+# --- Babak II: dumbbell porsi daerah vs porsi PDRB ---
 
 def dumbbell(f: dict, compact: bool = False) -> str:
-    """Lebar: label di kiri. Ringkas (ponsel): label di atas setiap baris,
-    supaya sumbu nilai memakai seluruh lebar layar."""
+    """Lebar: label di kiri. Ringkas (ponsel): label di atas baris agar sumbu memakai seluruh lebar."""
     tk = tokens()
     rows = sorted(f["clusters"], key=lambda r: r["pct_pdrb"])
     if compact:
@@ -245,14 +227,10 @@ def dumbbell(f: dict, compact: bool = False) -> str:
             f'{legend}{grid}{"".join(body)}</svg>')
 
 
-# ---------------------------------------------------------------------------
-# Babak II: small multiples, satu peta per pola
-# ---------------------------------------------------------------------------
+# --- Babak II: small multiples, satu peta per pola ---
 
 def cluster_maps(f: dict) -> str:
-    """Satu warna per peta. Enam warna dalam satu peta gagal uji pemisahan
-    buta warna untuk semua pasangan; small multiples menghindari masalah itu
-    sekaligus membuat sebaran setiap pola terbaca sendiri-sendiri."""
+    """Small multiples, satu warna per peta: enam warna dalam satu peta gagal uji buta warna."""
     tk = tokens()
     by = {}
     for k, c in f["cluster_of"].items():
@@ -263,8 +241,7 @@ def cluster_maps(f: dict) -> str:
         uses = "".join(
             f'<use href="#ws-r{k}" data-tip="{_tip(f["names"][k], f["provinces"][k], r["klaster"])}"/>'
             for k in members)
-        # Kota-kota kecil (mis. lima kota Jakarta) nyaris tak terlihat sebagai
-        # poligon pada peta selebar ini; titik membuat keberadaannya terbaca.
+        # Kota kecil nyaris tak terlihat sebagai poligon; diberi penanda titik.
         dots = "".join(
             '<circle cx="{:.1f}" cy="{:.1f}" r="7" data-tip="{}"/>'.format(
                 *_xy(f["lon"][k], f["lat"][k]), _tip(f["names"][k], f["provinces"][k], r["klaster"]))
@@ -282,15 +259,12 @@ def cluster_maps(f: dict) -> str:
     return f'<div class="ws-minis">{"".join(panels)}</div>'
 
 
-# ---------------------------------------------------------------------------
-# Babak III: batang pertumbuhan
-# ---------------------------------------------------------------------------
+# --- Babak III: batang pertumbuhan ---
 
 def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
                 label_w: int = 150, row_h: int = 34, compact: bool = False) -> str:
-    """Batang horizontal dari garis nol. Di atas acuan = aksen babak (makna:
-    lebih cepat dari nasional), di bawah = abu konteks. Nilai di dalam batang
-    bila batangnya cukup panjang (>= 55 px), di luar bila pendek."""
+    """Batang horizontal dari nol: di atas acuan = aksen babak, di bawah = abu konteks.
+    Nilai ditulis di dalam batang bila panjangnya >= 55 px, di luar bila pendek."""
     tk = tokens()
     if compact:  # label di atas batang, batang memakai seluruh lebar
         label_w, row_h = 12, max(row_h, 36)
@@ -339,9 +313,7 @@ def growth_bars(rows: list[dict], reference: float, accent: str, ref_label: str,
             f'{"".join(body)}{ref}</svg>')
 
 
-# ---------------------------------------------------------------------------
-# Babak IV: peta LISA
-# ---------------------------------------------------------------------------
+# --- Babak IV: peta LISA ---
 
 def lisa_map(f: dict) -> str:
     tk = tokens()
@@ -356,8 +328,7 @@ def lisa_map(f: dict) -> str:
 
 
 def lisa_legend(f: dict) -> str:
-    # Jumlah daerah per kelas sengaja tidak ditulis di legenda agar rapi;
-    # angkanya tetap dibacakan lewat aria-label peta.
+    # Jumlah daerah per kelas tidak ditulis di legenda; tetap dibacakan lewat aria-label peta.
     tk = tokens()
     items = "".join(f'<span><i style="background:{col}"></i>{escape(q)}</span>'
                     for q, col in tk.lisa.items())

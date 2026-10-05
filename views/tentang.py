@@ -245,4 +245,3 @@ with st.container(key="dl-cards"):
         st.html(f'<p class="dl-meta">{idn(len(reg_df), 0)} daerah · ±{ukuran(len(reg_csv))}</p>')
         st.download_button("Unduh data wilayah", reg_csv, file_name="wilayah.csv", mime="text/csv",
                            icon=":material/download:", use_container_width=True)
-# Kredit pembuat ada di footer global (ui.footer), yang tampil di semua halaman.

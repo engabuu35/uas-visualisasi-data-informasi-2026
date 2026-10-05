@@ -4,9 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# ---------------------------------------------------------------------------
-# Berkas
-# ---------------------------------------------------------------------------
+# --- Berkas ---
 RAW_XLSX = ROOT / "data" / "raw" / "pdrb_2026.xlsx"
 RAW_GEOJSON = ROOT / "data" / "geo" / "kabkota.geojson"
 
@@ -15,9 +13,7 @@ PROCESSED_CSV = PROCESSED_DIR / "pdrb_long.csv"        # tidy: 1 baris = wilayah
 REGIONS_CSV = PROCESSED_DIR / "wilayah.csv"            # kode, nama, provinsi, pulau, titik pusat
 GEOJSON = PROCESSED_DIR / "kabkota_simplified.geojson"  # batas yang sudah disederhanakan untuk web
 
-# ---------------------------------------------------------------------------
-# Sumber data
-# ---------------------------------------------------------------------------
+# --- Sumber data ---
 BPS_TABLE_TITLE = (
     "PDRB Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut 17 Kategori "
     "Lapangan Usaha di Kabupaten/Kota (Milyar Rupiah), 2026"
@@ -41,8 +37,7 @@ MADE_DATE = "3 Oktober 2026"
 SOURCE_CITE = ("Badan Pusat Statistik, PDRB Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut "
                "17 Kategori Lapangan Usaha di Kabupaten/Kota 2026")
 
-# Batas wilayah adalah data pendukung non-BPS. Isi sesuai asal berkas
-# kabkota.geojson yang Anda pakai (penyedia, tahun batas, dan URL).
+# Batas wilayah: data pendukung non-BPS.
 GEO_SOURCE = "Bahan praktikum Sistem Informasi Geografis, Dr. Rindang Bangun Prasetyo, Politeknik Statistika STIS"
 GEO_SOURCE_URL = ""
 
@@ -50,17 +45,13 @@ SOURCE_NOTE = "Sumber: BPS, PDRB ADHK 2010 kab/kota, 2026 (diolah)"
 
 PERIODS = ["Triwulan I", "Triwulan II"]
 
-# Parameter metode yang ikut dikutip di teks. Disimpan di sini agar teks dan
-# perhitungan tidak bisa berbeda.
+# Parameter metode yang ikut dikutip di teks, agar teks dan perhitungan selalu sama.
 SPATIAL_K = 6          # tetangga terdekat untuk bobot spasial
 PERMUTATIONS = 999     # permutasi uji Moran's I / LISA
 N_CLUSTERS = 6         # klaster Ward (silhouette tertinggi pada k = 3-8)
 PERIOD_SHORT = {"Triwulan I": "TW I", "Triwulan II": "TW II"}
 
-# ---------------------------------------------------------------------------
-# Sektor (17 kategori lapangan usaha KBLI)
-# kode -> (nama singkat untuk grafik, kelompok)
-# ---------------------------------------------------------------------------
+# --- Sektor (17 kategori KBLI): kode -> (nama singkat, kelompok) ---
 SECTORS = {
     "A": ("Pertanian", "Primer"),
     "B": ("Pertambangan", "Primer"),
@@ -85,9 +76,7 @@ SECTOR_SHORT = {k: v[0] for k, v in SECTORS.items()}
 SECTOR_GROUP = {k: v[1] for k, v in SECTORS.items()}
 TOTAL_LABEL = "Produk Domestik Regional Bruto"
 
-# ---------------------------------------------------------------------------
-# Provinsi (kode BPS 2019, 34 provinsi) -> (nama tampilan, pulau/kawasan)
-# ---------------------------------------------------------------------------
+# --- Provinsi (kode BPS 2019, 34 provinsi) -> (nama tampilan, pulau/kawasan) ---
 PROVINCES = {
     "11": ("Aceh", "Sumatera"),
     "12": ("Sumatera Utara", "Sumatera"),
@@ -128,10 +117,7 @@ ISLAND_ORDER = [
     "Sumatera", "Jawa", "Bali–Nusa Tenggara", "Kalimantan", "Sulawesi", "Maluku–Papua",
 ]
 
-# ---------------------------------------------------------------------------
-# Babak cerita. Warnanya (aksen + latar per mode) ada di theme.ACT_COLORS,
-# berurutan sama dengan daftar ini. Semua warna lain juga di src/theme.py.
-# ---------------------------------------------------------------------------
+# --- Babak cerita (warnanya di theme.ACT_COLORS, urutan sama) ---
 ACTS = [
     {"key": "pusat", "roman": "I", "label": "Konsentrasi PDRB"},
     {"key": "jurang", "roman": "II", "label": "Pola Ekonomi"},

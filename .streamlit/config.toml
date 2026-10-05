@@ -1,8 +1,5 @@
 [theme]
-# Tema tidak dikunci: dengan [theme.light] dan [theme.dark] terdefinisi,
-# Streamlit mengikuti pengaturan sistem secara bawaan, dan pengguna bisa
-# memilih System / Light / Dark lewat menu kanan atas.
-# Nilai warna di bawah sama dengan CHROME di src/theme.py.
+# Tema mengikuti sistem dan bisa diganti lewat menu; warna sama dengan CHROME di src/theme.py.
 font = "sans serif"
 headingFont = "sans serif"
 baseRadius = "small"
@@ -27,6 +24,5 @@ borderColor = "#2A313B"
 headless = true
 
 [client]
-# "viewer" menampilkan menu dengan pilihan tema. "minimal" menyembunyikannya,
-# sehingga pengunjung tidak bisa berganti tema sama sekali.
+# "viewer" menampilkan menu dengan pilihan tema.
 toolbarMode = "viewer"
