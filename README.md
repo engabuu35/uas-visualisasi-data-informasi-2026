@@ -1,147 +1,172 @@
 # Satu Negeri, 514 Wajah Ekonomi
 
-Visualisasi struktur ekonomi 514 kabupaten/kota di Indonesia berdasarkan PDRB triwulanan 2026 dari BPS.
-Proyek UAS Visualisasi Data dan Informasi, Politeknik Statistika STIS.
+Visualisasi interaktif struktur, konsentrasi, pertumbuhan, dan pola spasial PDRB 514 kabupaten/kota di Indonesia berdasarkan data PDRB triwulanan 2026 dari Badan Pusat Statistik (BPS).
+
+Proyek UAS Visualisasi Data dan Informasi, Program Studi Komputasi Statistik, Politeknik Statistika STIS.
 
 - **Aplikasi:** https://514-wajah-ekonomi.streamlit.app/
 - **Repositori:** https://github.com/engabuu35/uas-visualisasi-data-informasi-2026
 
-## Isi aplikasi
+## Isi Aplikasi
 
-Aplikasi disusun dengan pola *martini glass* (Segel & Heer, 2010). Pembaca diajak mengikuti satu alur
-cerita lebih dulu, lalu dipersilakan menjelajah sendiri.
+Aplikasi mengadopsi pola *martini glass* [1], yaitu alur cerita yang dipandu pada bagian awal kemudian dilanjutkan dengan halaman eksplorasi interaktif.
 
-| Halaman | Topik ujian | Teknik |
+| Halaman | Topik visualisasi | Teknik |
 |---|---|---|
-| **Potret PDRB** | narasi | scrollytelling 4 babak, SVG buatan tangan: kurva konsentrasi, dumbbell + small multiples klaster, batang pertumbuhan, peta LISA; tooltip dan crosshair |
-| **Pola ekonomi** | (a) multivariat | PCA biplot, parallel coordinates, heatmap terklaster (Ward), profil klaster, pencilan Mahalanobis; *brushing & linking* dari biplot ke semua tampilan |
-| **Peta** | (e) geospasial | choropleth rasio (pangsa / LQ / pertumbuhan) dengan 3 metode klasifikasi, simbol proporsional, kontrol lapisan, zoom ke provinsi, Moran's I + peta LISA |
-| **Wilayah & sektor** | (c) berhierarki | treemap dan icicle 5 tingkat (Indonesia → pulau → provinsi → kab/kota → sektor, atau dibalik); ukuran = PDRB, warna = pertumbuhan; breadcrumb |
-| **Data & metode** | – | sumber, pra-pemrosesan, rumus, keterbatasan, unduhan data olahan |
+| **Potret PDRB** | Narasi | *Scrollytelling* 4 babak, grafik SVG, kurva konsentrasi, profil klaster, pertumbuhan, peta LISA, tooltip, dan interaksi pendukung |
+| **Pola ekonomi** | Multivariat | PCA biplot, *parallel coordinates*, heatmap terklaster (Ward), profil klaster, pencilan Mahalanobis, serta *brushing and linking* |
+| **Peta** | Geospasial | Choropleth rasio (pangsa, LQ, pertumbuhan), simbol proporsional, kontrol lapisan, zoom/pan, perbesaran ke provinsi, Moran's I, dan peta LISA |
+| **Wilayah & sektor** | Berhierarki | Treemap dan icicle dengan 5 tingkat: Indonesia → pulau → provinsi → kabupaten/kota → sektor; ukuran = PDRB, warna = pertumbuhan; *drill-down* dan *breadcrumb* |
+| **Data & metode** | Dokumentasi | Sumber data, pra-pemrosesan, rumus, metode, keterbatasan, dan unduhan data olahan |
 
-Ketentuan minimal Lampiran A yang dipenuhi:
+## Pemenuhan Ketentuan Minimal
 
-- **Multivariat.** Ada 17 variabel numerik dan 514 unit observasi. Reduksi dimensinya PCA, ditambah
-  parallel coordinates dan heatmap terklaster. Seleksi laso/kotak pada biplot langsung memperbarui
-  profil, tabel, parallel coordinates, dan heatmap. Klaster dan pencilan diberi interpretasi.
-- **Geospasial.** Mencakup 514 kab/kota. Ada tiga jenis peta: choropleth, simbol proporsional, dan LISA.
-  Choropleth hanya memakai rasio. Metode klasifikasi dijelaskan di bawah peta. Tersedia tooltip,
-  legenda, zoom/pan, dan kontrol lapisan, ditambah Moran's I.
-- **Hierarki.** Ada lima tingkat dan dua representasi (treemap, icicle). Ukuran dan warna mewakili dua
-  variabel yang berbeda. Drill-down dilengkapi breadcrumb (pathbar).
+### Multivariat
+
+- 17 variabel numerik berupa pangsa 17 lapangan usaha dan 514 unit observasi.
+- Satu teknik reduksi dimensi (PCA) dan dua teknik tambahan, yaitu *parallel coordinates* dan heatmap terklaster.
+- Seleksi laso/kotak pada biplot memperbarui profil daerah, *parallel coordinates*, dan heatmap secara bersamaan.
+- Klaster dan pencilan ditampilkan dan diinterpretasikan pada aplikasi.
+
+### Geospasial
+
+- Mencakup 514 kabupaten/kota.
+- Choropleth digunakan untuk variabel rasio, yaitu pangsa, LQ, dan pertumbuhan.
+- Nilai PDRB absolut ditampilkan menggunakan simbol proporsional.
+- Tersedia beberapa metode klasifikasi, tooltip, legenda, zoom/pan, kontrol lapisan, dan perbesaran ke provinsi.
+- Moran's I, Moran scatterplot, dan peta LISA digunakan sebagai analisis spasial tambahan.
+
+### Hierarki
+
+- Lima tingkat: Indonesia, pulau, provinsi, kabupaten/kota, dan sektor.
+- Dua representasi: treemap dan icicle.
+- Ukuran mengodekan PDRB dan warna mengodekan pertumbuhan *q-to-q*.
+- *Drill-down* dilengkapi dengan *breadcrumb*.
 
 ## Data
 
-| | |
+| Informasi | Keterangan |
 |---|---|
-| Tabel | PDRB Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut 17 Kategori Lapangan Usaha di Kabupaten/Kota (Milyar Rupiah), 2026 |
-| Penerbit | Badan Pusat Statistik |
-| URL | https://www.bps.go.id/id/statistics-table/2/Mjc3NSMy/pdrb-triwulanan-atas-dasar-harga-konstan-2010-100-menurut-17-kategori-lapangan-usaha-di-kabupaten-kota-milyar-rupiah.html |
-| Diakses | 27 September 2026 |
-| Cakupan terisi | Triwulan I dan II 2026 |
-| Batas wilayah | Bahan praktikum Sistem Informasi Geografis, Dr. Rindang Bangun Prasetyo, Politeknik Statistika STIS (data pendukung non-BPS, kode wilayah BPS 2019). |
+| **Tabel** | *PDRB Triwulanan Atas Dasar Harga Konstan (2010=100) Menurut 17 Kategori Lapangan Usaha di Kabupaten/Kota (Milyar Rupiah), 2026* |
+| **Penerbit** | Badan Pusat Statistik |
+| **URL** | https://www.bps.go.id/id/statistics-table/2/Mjc3NSMy/pdrb-triwulanan-atas-dasar-harga-konstan-2010-100-menurut-17-kategori-lapangan-usaha-di-kabupaten-kota-milyar-rupiah.html |
+| **Tanggal akses** | 27 September 2026 |
+| **Periode terisi** | Triwulan I dan II 2026 |
+| **Data pendukung** | Batas wilayah kabupaten/kota dari bahan praktikum Sistem Informasi Geografis, Dr. Rindang Bangun Prasetyo, Politeknik Statistika STIS; data pendukung non-BPS dengan kode wilayah tahun 2019 |
 
-## Struktur
+## Struktur Proyek
 
 ```text
-app.py                      navigasi halaman
+app.py                      # navigasi utama aplikasi
+
 views/
-  cerita.py                 alur cerita (scrollytelling 4 babak)
-  struktur.py               multivariat
-  peta.py                   geospasial
-  hierarki.py               hierarki
-  tentang.py                data & metode
+  cerita.py                 # alur cerita (scrollytelling 4 babak)
+  struktur.py               # visualisasi multivariat
+  peta.py                   # visualisasi geospasial
+  hierarki.py               # visualisasi berhierarki
+  tentang.py                # data dan metode
+
 src/
-  config.py                 sumber, sektor, provinsi, palet warna
-  preprocess.py             membaca tabel BPS, pangsa, LQ, pertumbuhan
-  analysis.py               PCA, Ward, Mahalanobis, Jenks, Moran/LISA, hierarki
-  charts.py                 semua figur Plotly
-  data.py                   cache Streamlit
-  ui.py                     elemen tampilan bersama
-  story.py                  satu-satunya sumber angka halaman Cerita
-  story_svg.py              grafik dan peta SVG halaman Cerita
-assets/story.css, story.js  gaya dan perilaku scrollytelling
-scripts/prepare_data.py     pra-pemrosesan (jalankan sekali)
-data/raw/pdrb_2026.xlsx     unduhan asli BPS
-data/geo/kabkota.geojson    batas wilayah asli (42 MB)
-data/processed/             hasil pra-pemrosesan
+  config.py                 # konfigurasi sumber, sektor, wilayah, dan tema
+  preprocess.py             # pengolahan data dan indikator turunan
+  analysis.py               # PCA, Ward, Mahalanobis, klasifikasi, Moran/LISA
+  charts.py                 # grafik Plotly
+  data.py                   # pemuatan dan cache data
+  ui.py                     # elemen antarmuka bersama
+  story.py                  # sumber angka halaman cerita
+  story_svg.py              # grafik SVG halaman cerita
+
+assets/
+  story.css                 # gaya halaman cerita
+  story.js                  # perilaku scrollytelling
+
+scripts/
+  prepare_data.py           # pra-pemrosesan data
+
+data/
+  raw/                      # data mentah BPS
+  geo/                      # data batas wilayah
+  processed/                # data hasil pra-pemrosesan
 ```
 
-## Menjalankan
+## Menjalankan Secara Lokal
+
+### Windows
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate          # Windows
-source .venv/bin/activate       # macOS/Linux
+.venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/prepare_data.py  # membuat data/processed/*
+python scripts/prepare_data.py
 streamlit run app.py
 ```
 
-`data/processed/` ikut di-commit sehingga Streamlit Cloud tidak perlu menjalankan skrip pra-pemrosesan.
+### macOS/Linux
 
-## Deploy (Streamlit Community Cloud)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python scripts/prepare_data.py
+streamlit run app.py
+```
 
-1. Push repositori ini ke GitHub (publik).
-2. Di [share.streamlit.io](https://share.streamlit.io), pilih **Create app** → repositori ini, cabang
-   `main`, berkas utama `app.py`. Dependensi dibaca dari `requirements.txt`.
-3. Setelah aplikasi aktif, isi URL aplikasi dan repositori di bagian atas README ini.
+Data pada `data/processed/` telah disertakan dalam repositori sehingga aplikasi yang telah dideploy tidak perlu menjalankan proses pra-pemrosesan ulang.
+
+## Deployment
+
+Aplikasi dideploy menggunakan **Streamlit Community Cloud** dan dapat diakses secara publik tanpa instalasi maupun login.
+
+Konfigurasi deployment menggunakan:
+
+- repository publik GitHub
+- branch `main`
+- entry point `app.py`
+- dependensi dari `requirements.txt`
 
 ## Pra-pemrosesan
 
-1. Tabel lebar BPS (17 kategori + PDRB × 5 periode) diubah ke format panjang. Tanda "-" dijadikan
-   kosong, lalu hanya TW I dan TW II yang dipakai.
-2. Kode kategori dipisahkan dari namanya (`A`, `M,N`, `R,S,T,U`). Baris PDRB diberi kode `TOTAL`
-   agar tidak tertukar dengan kategori P (Jasa Pendidikan).
-3. Data digabung dengan kode wilayah melalui nama kab/kota. Ke-514 nama cocok satu lawan satu.
-4. Pemeriksaan kualitas: tidak ada nilai kosong dan ada 112 sel bernilai nol. Selisih jumlah 17
-   sektor dengan baris PDRB paling besar 0,02%, karena pembulatan.
-5. Geometri disederhanakan dengan Douglas–Peucker (0,01°) dari 42 MB menjadi 1,1 MB. Titik pusat
-   diambil dengan `representative_point()` dan luas dihitung dengan pendekatan equal-area.
+1. Tabel BPS dalam format lebar diubah menjadi format panjang. Tanda `-` yang menunjukkan data belum tersedia diperlakukan sebagai nilai kosong, kemudian hanya Triwulan I dan II yang digunakan.
+2. Kode kategori dipisahkan dari nama kategori. Baris PDRB diberi kode `TOTAL` agar tidak tertukar dengan kategori P (Jasa Pendidikan).
+3. Data PDRB dicocokkan dengan data batas wilayah dan divalidasi agar seluruh 514 kabupaten/kota dapat dipetakan.
+4. Pemeriksaan kualitas menunjukkan tidak terdapat nilai kosong pada Triwulan I–II dan terdapat 112 sel bernilai nol. Selisih antara jumlah 17 sektor dan baris total PDRB BPS paling besar 0,02%, terutama akibat pembulatan.
+5. Geometri batas wilayah disederhanakan menggunakan algoritme Douglas–Peucker [2] dengan toleransi 0,01° untuk mengurangi ukuran data geospasial dari 42 MB menjadi sekitar 1,1 MB.
 
-## Catatan metode
+## Metode dan Indikator
 
-- Analisis multivariat memakai **pangsa** sektor (%), bukan nilai rupiah, supaya yang dibandingkan
-  adalah struktur ekonomi, bukan ukuran daerah. Pangsa distandardisasi (z-score) sebelum PCA dan Ward.
-- Jumlah klaster 6 dipilih karena silhouette Ward-nya tertinggi pada k = 3–8.
-- Pencilan ditentukan dengan Mahalanobis D² pada PC yang mencakup ≥ 80% varians, dengan ambang
-  χ²(0,99).
-- Bobot spasial memakai 6 tetangga terdekat (haversine), distandardisasi baris, karena banyak
-  wilayah berupa pulau. LISA diuji dengan 999 permutasi bersyarat. Bila ada daerah yang dikeluarkan
-  (pertumbuhan dari basis nol), permutasi menarik sebanyak tetangga yang tersisa pada tiap daerah.
-- Pertumbuhan dihitung dari jumlah nilai (ΣTW II/ΣTW I − 1) untuk simpul hierarki, pulau, nasional,
-  dan "semua sektor" di peta. Totalnya selalu jumlah 17 sektor (bukan baris PDRB BPS), sama seperti
-  penyebut pangsa. Rumus lengkap ada di halaman Data & metode.
-- Treemap dan icicle menuliskan porsi dan pertumbuhan di setiap kotak, sehingga pertumbuhan tidak
-  hanya dibaca dari warna. Warna teks label dipilih hitam atau putih per kotak (kontras ≥ 4,5:1).
-- Setiap grafik punya judul yang menyebut isi dan satuannya, serta baris "Sumber: BPS" berisi judul
-  tabel, tautan, dan tanggal akses.
-- Halaman Cerita adalah scrollytelling empat babak (Konsentrasi PDRB → Pola Ekonomi → Pertumbuhan → Pergeseran)
-  dengan grafik SVG buatan tangan (`src/story_svg.py`). Semua angka di teks berasal dari satu modul
-  data (`src/story.py`); tidak ada angka yang diketik di templat. SVG dikirim lewat skrip karena
-  sanitizer `st.html` membuang elemen `<svg>`.
-- Tema terang & gelap: `.streamlit/config.toml` mendefinisikan `[theme.light]` dan `[theme.dark]`;
-  bawaannya mengikuti sistem dan bisa diganti lewat menu ⋮. Semua warna ada di `src/theme.py`.
-  Karena Streamlit tidak rerun saat tema diganti, `theme.sync()` memasang komponen kecil yang
-  membaca tema yang tampil, mengganti variabel CSS seketika, dan memicu satu rerun agar grafik
-  Plotly dan SVG digambar ulang.
-- Tombol **Aksesibilitas** di tepi kiri memuat ukuran teks, opsi hentikan animasi, dan pilihan palet.
-  Kedua palet ramah buta warna:
+- Analisis multivariat menggunakan **pangsa sektor**, bukan nilai rupiah, sehingga yang dibandingkan adalah struktur ekonomi antardaerah. Pangsa kemudian distandardisasi dengan *z-score* sebelum PCA dan pengelompokan Ward.
+- Jumlah klaster ditentukan berdasarkan nilai *silhouette* pada rentang \(k=3\)–8 dan dipilih \(k=6\).
+- Pencilan multivariat ditandai menggunakan jarak Mahalanobis kuadrat pada komponen utama yang mencakup sedikitnya 80% varians.
+- Bobot spasial menggunakan enam tetangga terdekat berdasarkan jarak haversine dan distandardisasi per baris. Moran's I dan LISA dievaluasi menggunakan 999 permutasi.
+- Pertumbuhan *q-to-q* dihitung dari perubahan jumlah PDRB antara Triwulan I dan Triwulan II pada setiap simpul, termasuk daerah, pulau, nasional, dan tingkat sektor. Perhitungan tidak dilakukan jika nilai pada Triwulan I sama dengan nol.
+- Treemap dan icicle menampilkan PDRB melalui ukuran dan pertumbuhan melalui warna. Porsi dan pertumbuhan juga ditampilkan sebagai label sehingga informasi tidak hanya bergantung pada warna.
+- Setiap visualisasi memiliki judul, satuan, dan keterangan **“Sumber: BPS”**.
 
-  | | Kategorikal (klaster) | Sekuensial (besaran) | Divergen (LQ, pertumbuhan) | LISA |
-  |---|---|---|---|---|
-  | Viridis (bawaan) | palet rujukan tervalidasi (langkah terang/gelap) | Viridis | biru ↔ jingga | jingga / biru |
-  | Okabe-Ito / Cividis | Okabe-Ito (urutan hasil enumerasi) | Cividis | merah ↔ biru (RdBu) | merah / biru |
+## Aksesibilitas
 
-  Klaster selalu memakai penanda kedua (bentuk, label, legenda bernama, small multiples).
+Aplikasi mendukung tema terang dan gelap serta menyediakan panel **Aksesibilitas** untuk mengatur ukuran teks, menghentikan animasi, dan memilih palet.
+
+Palet dipilih dengan mempertimbangkan keterbatasan penglihatan warna. Untuk mengurangi ketergantungan pada warna, visualisasi klaster juga menggunakan bentuk, label, atau legenda. Cividis dan Okabe–Ito digunakan sebagai salah satu rujukan pemilihan palet [3], [4].
+
+## Catatan Penting
+
+- Halaman **Potret PDRB** menggunakan *scrollytelling* empat babak: Konsentrasi PDRB → Pola Ekonomi → Pertumbuhan → Perubahan Kontribusi.
+- Angka yang digunakan pada halaman cerita berasal dari modul data yang sama sehingga angka pada narasi dan visualisasi konsisten.
+- Data utama berasal dari BPS. Batas wilayah merupakan data pendukung non-BPS.
+- Untuk analisis struktur ekonomi, pangsa sektor digunakan agar perbandingan tidak didominasi oleh perbedaan ukuran ekonomi antarwilayah.
 
 ## Keterbatasan
 
-- Datanya baru dua triwulan, sehingga pertumbuhan q-to-q masih bercampur pola musiman.
-- Harga konstan memakai tahun dasar 2010. Batas wilayah memakai kode 2019, sebelum pemekaran Papua.
-- PC1–PC2 hanya menjelaskan ±39% varians.
-- LISA belum dikoreksi untuk uji berganda. Pada peta porsi pertanian, 167 dari 514 daerah signifikan
-  tanpa koreksi dan 42 dengan koreksi FDR (Benjamini–Hochberg); peta LISA dibaca sebagai petunjuk
-  letak kantong, bukan bukti per daerah.
-- Di ponsel, biplot 514 titik menjadi padat; menu "Sorot" disediakan sebagai pengganti laso.
-  Kotak treemap yang sangat kecil memakai teks yang diperkecil otomatis; rinciannya ada di tooltip.
+- Data yang tersedia baru mencakup dua triwulan sehingga pertumbuhan *q-to-q* masih dapat dipengaruhi pola musiman.
+- PDRB menggunakan tahun dasar 2010, sedangkan data batas wilayah menggunakan kode tahun 2019 sehingga pemekaran provinsi di Papua belum tercermin.
+- PC1 dan PC2 hanya menjelaskan sekitar 39% varians sehingga interpretasi kedekatan antardaerah pada biplot perlu dilengkapi dengan heatmap.
+- Hasil LISA belum dikoreksi untuk pengujian berganda pada visualisasi utama. Pada peta porsi pertanian, 167 dari 514 daerah signifikan sebelum koreksi dan 42 setelah koreksi FDR Benjamini–Hochberg.
+- Biplot dengan 514 titik masih cukup padat pada layar ponsel sehingga menu **Sorot** disediakan sebagai alternatif seleksi langsung.
+
+## Lisensi dan Sumber
+
+Data utama PDRB bersumber dari **Badan Pusat Statistik (BPS)**.
+
+Data batas wilayah digunakan sebagai data pendukung non-BPS dari bahan praktikum Sistem Informasi Geografis, Politeknik Statistika STIS.
+
+Proyek ini dibuat untuk keperluan UAS Visualisasi Data dan Informasi.
